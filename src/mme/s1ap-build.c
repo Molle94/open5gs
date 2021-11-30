@@ -431,6 +431,13 @@ ogs_pkbuf_t *s1ap_build_initial_context_setup_request(
                 ogs_assert(bearer->qos.gbr.downlink);
                 ogs_assert(bearer->qos.gbr.uplink);
 
+                ogs_debug("    MBR[DL:%lld,UL:%lld]",
+                    (long long)bearer->qos.mbr.downlink,
+                    (long long)bearer->qos.mbr.uplink);
+                ogs_debug("    GBR[DL:%lld,UL:%lld]",
+                    (long long)bearer->qos.gbr.downlink,
+                    (long long)bearer->qos.gbr.uplink);
+
                 gbrQosInformation = 
                         CALLOC(1, sizeof(struct S1AP_GBR_QosInformation));
                 asn_uint642INTEGER(&gbrQosInformation->e_RAB_MaximumBitrateDL,
@@ -451,9 +458,9 @@ ogs_pkbuf_t *s1ap_build_initial_context_setup_request(
             ogs_asn_uint32_to_OCTET_STRING(
                     bearer->sgw_s1u_teid, &e_rab->gTP_TEID);
 
-            ogs_debug("    EMM[%p] LEN[%d]", emmbuf, emmbuf ? emmbuf->len : 0);
-
             if (emmbuf && emmbuf->len) {
+                ogs_debug("    NAS[%p:%d]", emmbuf, emmbuf->len);
+
                 nasPdu = (S1AP_NAS_PDU_t *)CALLOC(1, sizeof(S1AP_NAS_PDU_t));
                 nasPdu->size = emmbuf->len;
                 nasPdu->buf = CALLOC(nasPdu->size, sizeof(uint8_t));
@@ -520,8 +527,6 @@ ogs_pkbuf_t *s1ap_build_initial_context_setup_request(
     SecurityKey->bits_unused = 0;
     memcpy(SecurityKey->buf, mme_ue->kenb, SecurityKey->size);
 
-    ogs_debug("    mme_ue->nas_eps.type[%d:%d]",
-            mme_ue->nas_eps.type, MME_P_TMSI_IS_AVAILABLE(mme_ue));
     if (mme_ue->nas_eps.type == MME_EPS_TYPE_EXTENDED_SERVICE_REQUEST &&
         MME_P_TMSI_IS_AVAILABLE(mme_ue)) {
 
@@ -563,12 +568,13 @@ ogs_pkbuf_t *s1ap_build_initial_context_setup_request(
 
     }
 
-    ogs_debug("    mme_ue->ueRadioCapability[%p:%lld]",
-                    mme_ue->ueRadioCapability.buf,
-                    (long long)mme_ue->ueRadioCapability.size);
     if (mme_ue->ueRadioCapability.buf && mme_ue->ueRadioCapability.size) {
         /* Set UeRadioCapability if exists */
         S1AP_UERadioCapability_t *UERadioCapability = NULL;
+
+        ogs_debug("    UERadioCapability[%p:%d]",
+                    mme_ue->ueRadioCapability.buf,
+                    (int)mme_ue->ueRadioCapability.size);
 
         ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
         ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);
@@ -578,7 +584,6 @@ ogs_pkbuf_t *s1ap_build_initial_context_setup_request(
         ie->value.present =
             S1AP_InitialContextSetupRequestIEs__value_PR_UERadioCapability;
 
-        ogs_debug("    UERadioCapability");
         UERadioCapability = &ie->value.choice.UERadioCapability;
 
         ogs_assert(UERadioCapability);
@@ -595,7 +600,6 @@ ogs_pkbuf_t *s1ap_build_initial_context_setup_request(
      * TAC(8 digits) - SNR(6 digits) - SVN(2 digits)
      * IMEISV(16 digits) ==> 8bytes
      */
-    ogs_debug("    mme_ue->imeisv_len[%d]", mme_ue->imeisv_len);
     if (mme_ue->imeisv_len == OGS_MAX_IMEISV_LEN) {
         ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
         ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);
@@ -614,8 +618,6 @@ ogs_pkbuf_t *s1ap_build_initial_context_setup_request(
         memcpy(Masked_IMEISV->buf, mme_ue->masked_imeisv, Masked_IMEISV->size);
     }
 
-    ogs_debug("    mme_ue->ue_additional_security_capability.length[%d]",
-            mme_ue->ue_additional_security_capability.length);
     if (mme_ue->ue_additional_security_capability.length) {
         ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
         ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);

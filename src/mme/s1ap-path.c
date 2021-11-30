@@ -245,7 +245,7 @@ int s1ap_send_s1_setup_response(mme_enb_t *enb)
     int rv;
     ogs_pkbuf_t *s1ap_buffer;
 
-    ogs_debug("[MME] S1-Setup response");
+    ogs_debug("S1-Setup response");
     s1ap_buffer = s1ap_build_setup_rsp();
     ogs_expect_or_return_val(s1ap_buffer, OGS_ERROR);
 
@@ -261,7 +261,7 @@ int s1ap_send_s1_setup_failure(
     int rv;
     ogs_pkbuf_t *s1ap_buffer;
 
-    ogs_debug("[MME] S1-Setup failure");
+    ogs_debug("S1-Setup failure");
     s1ap_buffer = s1ap_build_setup_failure(group, cause, S1AP_TimeToWait_v10s);
     ogs_expect_or_return_val(s1ap_buffer, OGS_ERROR);
 
@@ -278,10 +278,13 @@ int s1ap_send_initial_context_setup_request(mme_ue_t *mme_ue)
 
     ogs_assert(mme_ue);
 
+    ogs_debug("InitialContextSetupRequest");
     s1apbuf = s1ap_build_initial_context_setup_request(mme_ue, NULL);
+    ogs_debug("s1apbuf = %p", s1apbuf);
     ogs_expect_or_return_val(s1apbuf, OGS_ERROR);
 
     rv = nas_eps_send_to_enb(mme_ue, s1apbuf);
+    ogs_debug("nas_epc_send_to_enb");
     ogs_expect(rv == OGS_OK);
 
     return rv;
@@ -312,7 +315,7 @@ int s1ap_send_ue_context_release_command(
 
     ogs_assert(enb_ue);
 
-    ogs_debug("[MME] UE Context release command");
+    ogs_debug("UEContextReleaseCommand");
     ogs_debug("    ENB_UE_S1AP_ID[%d] MME_UE_S1AP_ID[%d]",
             enb_ue->enb_ue_s1ap_id, enb_ue->mme_ue_s1ap_id);
 
@@ -484,7 +487,7 @@ int s1ap_send_handover_request(
 
     enb_ue_t *target_ue = NULL;
 
-    ogs_info("Handover request");
+    ogs_info("HandoverRequest");
     
     ogs_assert(source_ue);
     ogs_assert(source_ue->target_ue == NULL);
