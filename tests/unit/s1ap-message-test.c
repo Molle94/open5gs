@@ -966,8 +966,8 @@ abts_suite *test_s1ap_message(abts_suite *suite)
     abts_run_test(suite, s1ap_message_test5, NULL);
     abts_run_test(suite, s1ap_message_test6, NULL);
     abts_run_test(suite, s1ap_message_test7, NULL);
-    abts_run_test(suite, s1ap_message_test8, NULL);
 #endif
+    abts_run_test(suite, s1ap_message_test8, NULL);
     abts_run_test(suite, s1ap_message_test9, NULL);
 
     return suite;
