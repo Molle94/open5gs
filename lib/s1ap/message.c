@@ -27,7 +27,9 @@ ogs_pkbuf_t *ogs_s1ap_encode(ogs_s1ap_message_t *message)
 
     ogs_assert(message);
 
+#if 0
     if (ogs_log_get_domain_level(OGS_LOG_DOMAIN) >= OGS_LOG_TRACE)
+#endif
         asn_fprint(stdout, &asn_DEF_S1AP_S1AP_PDU, message);
 
     pkbuf = ogs_asn_encode(&asn_DEF_S1AP_S1AP_PDU, message);
