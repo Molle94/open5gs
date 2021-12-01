@@ -76,9 +76,7 @@ void emm_state_de_registered(ogs_fsm_t *s, mme_event_t *e)
         break;
     }
 
-    ogs_debug("before common_DE_register_state");
     common_register_state(s, e);
-    ogs_debug("after common_DE_register_state");
 }
 
 void emm_state_registered(ogs_fsm_t *s, mme_event_t *e)
@@ -88,9 +86,7 @@ void emm_state_registered(ogs_fsm_t *s, mme_event_t *e)
 
     mme_sm_debug(e);
 
-    ogs_debug("before common_register_state");
     common_register_state(s, e);
-    ogs_debug("after common_register_state");
 }
 
 static void common_register_state(ogs_fsm_t *s, mme_event_t *e)
@@ -169,12 +165,9 @@ static void common_register_state(ogs_fsm_t *s, mme_event_t *e)
                 break;
             }
 
-            ogs_debug("before common");
             ogs_assert(OGS_OK ==
                 s1ap_send_initial_context_setup_request(mme_ue));
-            ogs_debug("after common");
             OGS_FSM_TRAN(s, &emm_state_registered);
-            ogs_debug("FAM tran to registered");
             break;
         }
 
@@ -643,7 +636,6 @@ static void common_register_state(ogs_fsm_t *s, mme_event_t *e)
     default:
         ogs_error("Unknown event[%s]", mme_event_get_name(e));
     }
-    ogs_debug("EMM done");
 }
 
 void emm_state_authentication(ogs_fsm_t *s, mme_event_t *e)

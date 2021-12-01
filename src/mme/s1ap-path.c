@@ -279,12 +279,11 @@ int s1ap_send_initial_context_setup_request(mme_ue_t *mme_ue)
     ogs_assert(mme_ue);
 
     ogs_debug("InitialContextSetupRequest");
+
     s1apbuf = s1ap_build_initial_context_setup_request(mme_ue, NULL);
-    ogs_debug("s1apbuf = %p", s1apbuf);
     ogs_expect_or_return_val(s1apbuf, OGS_ERROR);
 
     rv = nas_eps_send_to_enb(mme_ue, s1apbuf);
-    ogs_debug("nas_epc_send_to_enb");
     ogs_expect(rv == OGS_OK);
 
     return rv;
