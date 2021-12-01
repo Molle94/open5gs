@@ -1992,6 +1992,16 @@ enb_ue_t *enb_ue_cycle(enb_ue_t *enb_ue)
     return ogs_pool_cycle(&enb_ue_pool, enb_ue);
 }
 
+mme_ue_t *mme_ue_cycle(mme_ue_t *mme_ue)
+{
+    return ogs_pool_cycle(&mme_ue_pool, mme_ue);
+}
+
+mme_sess_t *mme_sess_cycle(mme_sess_t *sess)
+{
+    return ogs_pool_cycle(&mme_sess_pool, sess);
+}
+
 void mme_ue_new_guti(mme_ue_t *mme_ue)
 {
     served_gummei_t *served_gummei = NULL;

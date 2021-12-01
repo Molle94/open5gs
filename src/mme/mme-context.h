@@ -690,6 +690,9 @@ enb_ue_t *enb_ue_find(uint32_t index);
 enb_ue_t *enb_ue_find_by_mme_ue_s1ap_id(uint32_t mme_ue_s1ap_id);
 enb_ue_t *enb_ue_cycle(enb_ue_t *enb_ue);
 
+mme_ue_t *mme_ue_cycle(mme_ue_t *mme_ue);
+mme_sess_t *mme_sess_cycle(mme_sess_t *sess);
+
 void mme_ue_new_guti(mme_ue_t *mme_ue);
 void mme_ue_confirm_guti(mme_ue_t *mme_ue);
 
