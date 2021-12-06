@@ -952,6 +952,290 @@ static void s1ap_message_test9(abts_case *tc, void *data)
     ogs_pkbuf_free(s1apbuf);
 }
 
+static void s1ap_message_test10(abts_case *tc, void *data)
+{
+    int rv;
+    ogs_pkbuf_t *s1apbuf = NULL;
+
+    S1AP_S1AP_PDU_t pdu;
+    S1AP_InitiatingMessage_t *initiatingMessage = NULL;
+    S1AP_InitialContextSetupRequest_t *InitialContextSetupRequest = NULL;
+
+    S1AP_InitialContextSetupRequestIEs_t *ie = NULL;
+    S1AP_MME_UE_S1AP_ID_t *MME_UE_S1AP_ID = NULL;
+    S1AP_ENB_UE_S1AP_ID_t *ENB_UE_S1AP_ID = NULL;
+    S1AP_UEAggregateMaximumBitrate_t *UEAggregateMaximumBitrate = NULL;
+    S1AP_E_RABToBeSetupListCtxtSUReq_t *E_RABToBeSetupListCtxtSUReq = NULL;
+    S1AP_UESecurityCapabilities_t *UESecurityCapabilities = NULL;
+    S1AP_SecurityKey_t *SecurityKey = NULL;
+    S1AP_Masked_IMEISV_t *Masked_IMEISV = NULL;
+    S1AP_NRUESecurityCapabilities_t *NRUESecurityCapabilities = NULL;
+
+    memset(&pdu, 0, sizeof (S1AP_S1AP_PDU_t));
+    pdu.present = S1AP_S1AP_PDU_PR_initiatingMessage;
+    pdu.choice.initiatingMessage = CALLOC(1, sizeof(S1AP_InitiatingMessage_t));
+
+    initiatingMessage = pdu.choice.initiatingMessage;
+    initiatingMessage->procedureCode =
+        S1AP_ProcedureCode_id_InitialContextSetup;
+    initiatingMessage->criticality = S1AP_Criticality_reject;
+    initiatingMessage->value.present =
+        S1AP_InitiatingMessage__value_PR_InitialContextSetupRequest;
+
+    InitialContextSetupRequest =
+        &initiatingMessage->value.choice.InitialContextSetupRequest;
+
+    ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
+    ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);
+
+    ie->id = S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID;
+    ie->criticality = S1AP_Criticality_reject;
+    ie->value.present =
+        S1AP_InitialContextSetupRequestIEs__value_PR_MME_UE_S1AP_ID;
+
+    MME_UE_S1AP_ID = &ie->value.choice.MME_UE_S1AP_ID;
+
+    ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
+    ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);
+
+    ie->id = S1AP_ProtocolIE_ID_id_eNB_UE_S1AP_ID;
+    ie->criticality = S1AP_Criticality_reject;
+    ie->value.present =
+        S1AP_InitialContextSetupRequestIEs__value_PR_ENB_UE_S1AP_ID;
+
+    ENB_UE_S1AP_ID = &ie->value.choice.ENB_UE_S1AP_ID;
+
+    ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
+    ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);
+
+    ie->id = S1AP_ProtocolIE_ID_id_uEaggregateMaximumBitrate;
+    ie->criticality = S1AP_Criticality_reject;
+    ie->value.present =
+        S1AP_InitialContextSetupRequestIEs__value_PR_UEAggregateMaximumBitrate;
+
+    UEAggregateMaximumBitrate = &ie->value.choice.UEAggregateMaximumBitrate;
+
+    ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
+    ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);
+
+    ie->id = S1AP_ProtocolIE_ID_id_E_RABToBeSetupListCtxtSUReq;
+    ie->criticality = S1AP_Criticality_reject;
+    ie->value.present =
+    S1AP_InitialContextSetupRequestIEs__value_PR_E_RABToBeSetupListCtxtSUReq;
+
+    E_RABToBeSetupListCtxtSUReq = &ie->value.choice.E_RABToBeSetupListCtxtSUReq;
+
+    *MME_UE_S1AP_ID = 205;
+    *ENB_UE_S1AP_ID = 5888;
+
+    asn_uint642INTEGER(
+            &UEAggregateMaximumBitrate->uEaggregateMaximumBitRateUL,
+            1073741824);
+    asn_uint642INTEGER(
+            &UEAggregateMaximumBitrate->uEaggregateMaximumBitRateDL,
+            1073741824);
+
+    {
+        S1AP_E_RABToBeSetupItemCtxtSUReqIEs_t *item = NULL;
+        S1AP_E_RABToBeSetupItemCtxtSUReq_t *e_rab = NULL;
+
+        item = CALLOC(1, sizeof(S1AP_E_RABToBeSetupItemCtxtSUReqIEs_t));
+        ASN_SEQUENCE_ADD(&E_RABToBeSetupListCtxtSUReq->list, item);
+
+        item->id = S1AP_ProtocolIE_ID_id_E_RABToBeSetupItemCtxtSUReq;
+        item->criticality = S1AP_Criticality_reject;
+        item->value.present = S1AP_E_RABToBeSetupItemCtxtSUReqIEs__value_PR_E_RABToBeSetupItemCtxtSUReq;
+
+        e_rab = &item->value.choice.E_RABToBeSetupItemCtxtSUReq;
+
+        e_rab->e_RAB_ID = 5;
+        e_rab->e_RABlevelQoSParameters.qCI = 9;
+
+        e_rab->e_RABlevelQoSParameters.allocationRetentionPriority.
+            priorityLevel = 8;
+        e_rab->e_RABlevelQoSParameters.allocationRetentionPriority.
+            pre_emptionCapability = 1;
+        e_rab->e_RABlevelQoSParameters.allocationRetentionPriority.
+            pre_emptionVulnerability = 1;
+
+        ogs_ip_t sgw_s1u_ip;
+        memset(&sgw_s1u_ip, 0, sizeof(sgw_s1u_ip));
+        sgw_s1u_ip.ipv4 = 1;
+        sgw_s1u_ip.addr = inet_addr("10.11.2.6");
+
+        rv = ogs_asn_ip_to_BIT_STRING(
+                &sgw_s1u_ip, &e_rab->transportLayerAddress);
+        ogs_assert(rv == OGS_OK);
+        ogs_asn_uint32_to_OCTET_STRING(
+                4400, &e_rab->gTP_TEID);
+    }
+
+    ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
+    ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);
+
+    ie->id = S1AP_ProtocolIE_ID_id_UESecurityCapabilities;
+    ie->criticality = S1AP_Criticality_reject;
+    ie->value.present =
+        S1AP_InitialContextSetupRequestIEs__value_PR_UESecurityCapabilities;
+
+    UESecurityCapabilities = &ie->value.choice.UESecurityCapabilities;
+
+    UESecurityCapabilities->encryptionAlgorithms.size = 2;
+    UESecurityCapabilities->encryptionAlgorithms.buf =
+        CALLOC(UESecurityCapabilities->encryptionAlgorithms.size,
+                    sizeof(uint8_t));
+    UESecurityCapabilities->encryptionAlgorithms.bits_unused = 0;
+    UESecurityCapabilities->encryptionAlgorithms.buf[0] = 0xe0;
+
+    UESecurityCapabilities->integrityProtectionAlgorithms.size = 2;
+    UESecurityCapabilities->integrityProtectionAlgorithms.buf =
+        CALLOC(UESecurityCapabilities->
+                        integrityProtectionAlgorithms.size, sizeof(uint8_t));
+    UESecurityCapabilities->integrityProtectionAlgorithms.bits_unused = 0;
+    UESecurityCapabilities->integrityProtectionAlgorithms.buf[0] = 0xe0;
+
+    {
+        const char *kenb_string =
+            "1dacef4b 77ca2953 0b9f2076 1125181b"
+            "11596aba 6a8c38be 2a4e0ead 9fdf2c67";
+        uint8_t kenb[32];
+
+        ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
+        ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);
+
+        ie->id = S1AP_ProtocolIE_ID_id_SecurityKey;
+        ie->criticality = S1AP_Criticality_reject;
+        ie->value.present =
+            S1AP_InitialContextSetupRequestIEs__value_PR_SecurityKey;
+
+        SecurityKey = &ie->value.choice.SecurityKey;
+
+        SecurityKey->size = 32;
+        SecurityKey->buf = CALLOC(SecurityKey->size, sizeof(uint8_t));
+        SecurityKey->bits_unused = 0;
+        OGS_HEX(kenb_string, strlen(kenb_string), kenb);
+        memcpy(SecurityKey->buf, kenb, SecurityKey->size);
+    }
+
+    {
+        /* Set UeRadioCapability if exists */
+        S1AP_UERadioCapability_t *UERadioCapability = NULL;
+        const char *radio_string =
+            "0415b801 082b3cd9 80096c11 30c9c004"
+            "0e954099 3ff87f27 ff0fe4ff e1fc9ffc"
+            "3f93ff87 f27ff0fe 4ffe1fc9 ffc3f93f"
+            "f87f27ff 0fdfc3ff 2fa00601 10f283f0"
+            "7e800000 0000408f a80c9001 e01b6000"
+            "80061000 2001a600 08006300 02001ce0"
+            "00800600 00200188 00080063 8002001c"
+            "a0008007 40002002 d01036c0 01001670"
+            "81b60008 00b2840d b0004007 6c001011"
+            "82002b61 03180010 01db0004 0420800a"
+            "d840c200 040076c0 01010020 02b61030"
+            "0001001d 30004042 0800a984 0c200040"
+            "071c0010 10820028 e1030800 1001c600"
+            "04042080 0a3040c2 00040071 00010108"
+            "20028810 30800100 1c200040 42080061"
+            "0002402d 01034c00 10016708 1a600080"
+            "0b2840d3 00040074 c0010118 2002a610"
+            "31800100 1d300040 400800a9 840c0000"
+            "40071c00 10118200 28e10318 001001c6"
+            "00040460 800e3000 20220400 51820620"
+            "0020018c 00090063 0002203c e00080ce"
+            "10016708 18e00080 0b3840c4 00040039"
+            "c001201c 70004040 0800a384 0c000040"
+            "07100010 10020028 81030000 1001c000"
+            "04040080 06000024 02d01031 00010016"
+            "50818800 0800b404 0c700040 05942063"
+            "8002003c a00080ca 1000e500 04807a00"
+            "0101a020 01d00009 0f24ffe1 fc9ffc3f"
+            "93ff87f2 7ff0fe4f fe1fc9ff c3f93ff8"
+            "7f27ff0f e4ffe1fc 9ffc3f93 ff87f27f"
+            "f0fe4ffe 1fc9ffc3 f93ff87f 27ff0fe4"
+            "ffe1fc9f fc3f93ff 87f27ff0 fe4ffe1f"
+            "c9ffc3f9 3ff87f27 ff0fe4ff e1fc9ffc"
+            "3f93ff87 f27ff0fe 4ffe1fc9 ffc3f93f"
+            "f87f27ff 0fe4ffe1 fc9ffc3f 93ff87f2"
+            "7ff0fe4f fe1fc9ff c3f93ff8 7f27ff0f"
+            "e4ffe1fc 9ffc3f93 ff87f27f f0fe4ffe"
+            "1fc9ffc3 f93ff87f 27ff0fe4 ffe1fc9f"
+            "fc3f93ff 87f27ff0 fe4ffe1f c9ffc3f9"
+            "3ff87f27 ff0fe4ff e1fc9ffc 3f93ff87"
+            "f27ff0fe 4ffe1fa0 12000066 f00010f0"
+            "e43c3c3c 3c7f1fc3 c3c7f1f8 21e1c878"
+            "78787878 b887878b c5e1e1c0 21e3f648"
+            "8018c298 0209aaaa ad30";
+        uint8_t radio[698];
+
+        ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
+        ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);
+
+        ie->id = S1AP_ProtocolIE_ID_id_UERadioCapability;
+        ie->criticality = S1AP_Criticality_ignore;
+        ie->value.present =
+            S1AP_InitialContextSetupRequestIEs__value_PR_UERadioCapability;
+
+        UERadioCapability = &ie->value.choice.UERadioCapability;
+
+        ogs_assert(UERadioCapability);
+        OGS_HEX(radio_string, strlen(radio_string), radio);
+        ogs_s1ap_buffer_to_OCTET_STRING(
+                radio, 698, UERadioCapability);
+    }
+
+    {
+        const char *masked_string =
+            "86740905 00ffff03";
+        uint8_t masked[8];
+
+        ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
+        ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);
+
+        ie->id = S1AP_ProtocolIE_ID_id_Masked_IMEISV;
+        ie->criticality = S1AP_Criticality_ignore;
+        ie->value.present =
+            S1AP_InitialContextSetupRequestIEs__value_PR_Masked_IMEISV;
+
+        Masked_IMEISV = &ie->value.choice.Masked_IMEISV;
+
+        Masked_IMEISV->size = 8;
+        Masked_IMEISV->buf = CALLOC(Masked_IMEISV->size, sizeof(uint8_t));
+        Masked_IMEISV->bits_unused = 0;
+        OGS_HEX(masked_string, strlen(masked_string), masked);
+        memcpy(Masked_IMEISV->buf, masked, Masked_IMEISV->size);
+    }
+    {
+        ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
+        ASN_SEQUENCE_ADD(&InitialContextSetupRequest->protocolIEs, ie);
+
+        ie->id = S1AP_ProtocolIE_ID_id_NRUESecurityCapabilities;
+        ie->criticality = S1AP_Criticality_ignore;
+        ie->value.present = S1AP_InitialContextSetupRequestIEs__value_PR_NRUESecurityCapabilities;
+
+        NRUESecurityCapabilities = &ie->value.choice.NRUESecurityCapabilities;
+
+        NRUESecurityCapabilities->nRencryptionAlgorithms.size = 2;
+        NRUESecurityCapabilities->nRencryptionAlgorithms.buf =
+            CALLOC(NRUESecurityCapabilities->nRencryptionAlgorithms.size,
+                        sizeof(uint8_t));
+        NRUESecurityCapabilities->nRencryptionAlgorithms.bits_unused = 0;
+        NRUESecurityCapabilities->nRencryptionAlgorithms.buf[0] = 0xe0;
+
+        NRUESecurityCapabilities->nRintegrityProtectionAlgorithms.size = 2;
+        NRUESecurityCapabilities->nRintegrityProtectionAlgorithms.buf =
+            CALLOC(NRUESecurityCapabilities->
+                    nRintegrityProtectionAlgorithms.size, sizeof(uint8_t));
+        NRUESecurityCapabilities->nRintegrityProtectionAlgorithms.
+            bits_unused = 0;
+        NRUESecurityCapabilities->nRintegrityProtectionAlgorithms.buf[0] =
+            0xe0;
+    }
+
+    s1apbuf = ogs_s1ap_encode(&pdu);
+    ogs_assert(s1apbuf);
+    ogs_pkbuf_free(s1apbuf);
+}
+
 abts_suite *test_s1ap_message(abts_suite *suite)
 {
     suite = ADD_SUITE(suite)
@@ -966,9 +1250,10 @@ abts_suite *test_s1ap_message(abts_suite *suite)
     abts_run_test(suite, s1ap_message_test5, NULL);
     abts_run_test(suite, s1ap_message_test6, NULL);
     abts_run_test(suite, s1ap_message_test7, NULL);
-#endif
     abts_run_test(suite, s1ap_message_test8, NULL);
     abts_run_test(suite, s1ap_message_test9, NULL);
+#endif
+    abts_run_test(suite, s1ap_message_test10, NULL);
 
     return suite;
 }
