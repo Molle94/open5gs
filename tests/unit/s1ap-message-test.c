@@ -1096,8 +1096,8 @@ static void s1ap_message_test10(abts_case *tc, void *data)
 
     {
         const char *kenb_string =
-            "1dacef4b 77ca2953 0b9f2076 1125181b"
-            "11596aba 6a8c38be 2a4e0ead 9fdf2c67";
+            "e9cb2fcf 24cf962c c04ead05 519eed52"
+            "bf2279a2 0b63f2fa fb515915 82b1e774";
         uint8_t kenb[32];
 
         ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
@@ -1185,7 +1185,7 @@ static void s1ap_message_test10(abts_case *tc, void *data)
 
     {
         const char *masked_string =
-            "86740905 00ffff03";
+            "35514310 00ffff07";
         uint8_t masked[8];
 
         ie = CALLOC(1, sizeof(S1AP_InitialContextSetupRequestIEs_t));
