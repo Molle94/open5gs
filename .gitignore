@@ -1,5 +1,22 @@
 # This directory is fetched during first build and is present in this directory
 subprojects/freeDiameter
 subprojects/usrsctp
+subprojects/libtins
 
+build/
+builddir/
+install/
+webui/node_modules/*
 webui/.next
+
+*.log
+*.tmp
+.vscode
+
+# Compiled Object files
+*.o
+*.obj
+
+# Executables
+*.exe
+*.out
