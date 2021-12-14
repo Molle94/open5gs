@@ -4,7 +4,7 @@ export DB_URI="mongodb://localhost/open5gs"
 
 mongod --smallfiles --dbpath /var/lib/mongodb --logpath /open5gs/install/var/log/open5gs/mongodb.log --logRotate reopen --logappend &
 
-sleep 10 && cd /open5gs/webui && npm run dev &
+sleep 6 && cd /open5gs/webui && npm run dev &
 
 cd /
 
@@ -16,7 +16,7 @@ if ! grep "ogstun" /proc/net/dev > /dev/null; then
 fi
 
 ./open5gs/install/bin/open5gs-nrfd & 
-sleep 5
+sleep 3
 ./open5gs/install/bin/open5gs-smfd &
 ./open5gs/install/bin/open5gs-amfd & 
 ./open5gs/install/bin/open5gs-ausfd &
