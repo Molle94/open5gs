@@ -18,4 +18,3 @@
 subdir('common')
 subdir('util')
 subdir('ngap')
-subdir('s1ap')
