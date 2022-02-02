@@ -151,6 +151,7 @@ bool ausf_sbi_discover_and_send(OpenAPI_nf_type_e target_nf_type,
     xact = ogs_sbi_xact_add(target_nf_type, &ausf_ue->sbi,
             (ogs_sbi_build_f)build, ausf_ue, data,
             ausf_timer_sbi_client_wait_expire);
+    ogs_info("[state] ue change sbi");
     if (!xact) {
         ogs_error("ausf_sbi_discover_and_send() failed");
         ogs_assert(true ==

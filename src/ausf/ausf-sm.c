@@ -156,6 +156,7 @@ void ausf_state_operational(ogs_fsm_t *s, ausf_event_t *e)
             e->ausf_ue = ausf_ue;
             e->sbi.message = &message;
             ogs_fsm_dispatch(&ausf_ue->sm, e);
+            ogs_info("[state] ue sm dispatch");
             if (OGS_FSM_CHECK(&ausf_ue->sm, ausf_ue_state_exception)) {
                 ogs_error("[%s] State machine exception", ausf_ue->suci);
                 ausf_ue_remove(ausf_ue);
@@ -294,6 +295,7 @@ void ausf_state_operational(ogs_fsm_t *s, ausf_event_t *e)
             e->sbi.message = &message;
 
             ogs_fsm_dispatch(&ausf_ue->sm, e);
+            ogs_info("[state] ue sm dispatch");
             if (OGS_FSM_CHECK(&ausf_ue->sm, ausf_ue_state_exception)) {
                 ogs_error("[%s] State machine exception", ausf_ue->suci);
                 ausf_ue_remove(ausf_ue);

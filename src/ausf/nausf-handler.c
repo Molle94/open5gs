@@ -49,9 +49,12 @@ bool ausf_nausf_auth_handle_authenticate(ausf_ue_t *ausf_ue,
         return false;
     }
 
-    if (ausf_ue->serving_network_name)
-        ogs_free(ausf_ue->serving_network_name);
+    if (ausf_ue->serving_network_name) {
+      ogs_free(ausf_ue->serving_network_name);
+      ogs_info("[state] ue free serving_network_name");
+    }
     ausf_ue->serving_network_name = ogs_strdup(serving_network_name);
+    ogs_info("[state] ue set serving_network_name");
     ogs_assert(ausf_ue->serving_network_name);
 
     ogs_assert(true ==
@@ -94,13 +97,16 @@ bool ausf_nausf_auth_handle_authenticate_confirmation(ausf_ue_t *ausf_ue,
     ogs_ascii_to_hex(res_star_string, strlen(res_star_string),
             res_star, sizeof(res_star));
 
+    ogs_info("[state] ue set xres_star");
     if (memcmp(res_star, ausf_ue->xres_star, OGS_MAX_RES_LEN) != 0) {
         ogs_log_hexdump(OGS_LOG_WARN, res_star, OGS_MAX_RES_LEN);
         ogs_log_hexdump(OGS_LOG_WARN, ausf_ue->xres_star, OGS_MAX_RES_LEN);
 
         ausf_ue->auth_result = OpenAPI_auth_result_AUTHENTICATION_FAILURE;
+        ogs_info("[state] ue set auth_result");
     } else {
         ausf_ue->auth_result = OpenAPI_auth_result_AUTHENTICATION_SUCCESS;
+        ogs_info("[state] ue set auth_result");
     }
 
     ogs_assert(true ==

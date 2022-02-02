@@ -138,19 +138,23 @@ bool ausf_nudm_ueau_handle_get(ausf_ue_t *ausf_ue,
     }
 
     ausf_ue->auth_type = AuthenticationInfoResult->auth_type;
+    ogs_info("[state] ue set auth_type");
 
     ogs_ascii_to_hex(
         AuthenticationVector->rand,
         strlen(AuthenticationVector->rand),
         ausf_ue->rand, sizeof(ausf_ue->rand));
+    ogs_info("[state] ue set rand");
     ogs_ascii_to_hex(
         AuthenticationVector->xres_star,
         strlen(AuthenticationVector->xres_star),
         ausf_ue->xres_star, sizeof(ausf_ue->xres_star));
+    ogs_info("[state] ue set xres_star");
     ogs_ascii_to_hex(
         AuthenticationVector->kausf,
         strlen(AuthenticationVector->kausf),
         ausf_ue->kausf, sizeof(ausf_ue->kausf));
+    ogs_info("[state] ue set kausf");
 
     memset(&UeAuthenticationCtx, 0, sizeof(UeAuthenticationCtx));
 
@@ -247,17 +251,23 @@ bool ausf_nudm_ueau_handle_result_confirmation_inform(ausf_ue_t *ausf_ue,
         return false;
     }
 
-    if (ausf_ue->auth_events_url)
-        ogs_free(ausf_ue->auth_events_url);
+    if (ausf_ue->auth_events_url) {
+      ogs_free(ausf_ue->auth_events_url);
+      ogs_info("[state] ue free auth_events_url");
+    }
     ausf_ue->auth_events_url = ogs_strdup(recvmsg->http.location);
+    ogs_info("[state] ue set auth_events_url");
     ogs_assert(ausf_ue->auth_events_url);
 
     memset(&ConfirmationDataResponse, 0, sizeof(ConfirmationDataResponse));
 
-    if (AuthEvent->success == true)
-        ausf_ue->auth_result = OpenAPI_auth_result_AUTHENTICATION_SUCCESS;
-    else
-        ausf_ue->auth_result = OpenAPI_auth_result_AUTHENTICATION_FAILURE;
+    if (AuthEvent->success == true) {
+      ausf_ue->auth_result = OpenAPI_auth_result_AUTHENTICATION_SUCCESS;
+      ogs_info("[state] ue set auth_result");
+    } else {
+      ausf_ue->auth_result = OpenAPI_auth_result_AUTHENTICATION_FAILURE;
+      ogs_info("[state] ue set auth_result");
+    }
 
     ConfirmationDataResponse.auth_result = ausf_ue->auth_result;
     ConfirmationDataResponse.supi = ausf_ue->supi;
