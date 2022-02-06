@@ -17,6 +17,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
+
+#include <unistd.h>
 #include "sbi-path.h"
 
 static ausf_context_t self;
@@ -29,44 +32,55 @@ static int context_initialized = 0;
 
 void ausf_context_init(void)
 {
+    instr_start_timing();
     ogs_assert(context_initialized == 0);
 
     /* Initialize AUSF context */
     memset(&self, 0, sizeof(ausf_context_t));
 
     ogs_log_install_domain(&__ausf_log_domain, "ausf", ogs_core()->log.level);
-    ogs_info("[state] new context");
+    instr_state_logging("ausf_context_t", INSTR_MEM_ACTION_CLEAR, "");
+//    ogs_info("[state] new context");
 
     ogs_pool_init(&ausf_ue_pool, ogs_app()->max.ue);
-    ogs_info("[state] new ue pool");
+    instr_state_logging_f("ausf_ue_pool", INSTR_MEM_ACTION_INIT, "pool size: %lu", ogs_app()->max.ue);
+//    ogs_info("[state] new ue pool");
 
     ogs_list_init(&self.ausf_ue_list);
-    ogs_info("[state] init context ue list");
-
+    instr_state_logging_child("ausf_context_t", "ausf_ue_list", INSTR_MEM_ACTION_INIT, "");
+//    ogs_info("[state] init context ue list");
     self.suci_hash = ogs_hash_make();
-    ogs_info("[state] context set suci_hash");
+    instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_INIT, "");
+//    ogs_info("[state] context set suci_hash");
     ogs_assert(self.suci_hash);
     self.supi_hash = ogs_hash_make();
-    ogs_info("[state] context set supi_hash");
+    instr_state_logging_child("ausf_context_t", "supi_hash", INSTR_MEM_ACTION_INIT, "");
+//    ogs_info("[state] context set supi_hash");
     ogs_assert(self.supi_hash);
 
     context_initialized = 1;
+    instr_stop_timing("ausf_context_init");
 }
 
 void ausf_context_final(void)
 {
+    instr_start_timing();
     ogs_assert(context_initialized == 1);
 
     ausf_ue_remove_all();
 
     ogs_assert(self.suci_hash);
     ogs_hash_destroy(self.suci_hash);
+    instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_FREE, "");
     ogs_assert(self.supi_hash);
     ogs_hash_destroy(self.supi_hash);
+    instr_state_logging_child("ausf_context_t", "supi_hash", INSTR_MEM_ACTION_FREE, "");
 
     ogs_pool_final(&ausf_ue_pool);
+    instr_state_logging("ausf_ue_pool", INSTR_MEM_ACTION_FREE, "");
 
     context_initialized = 0;
+    instr_stop_timing("ausf_context_final");
 }
 
 ausf_context_t *ausf_self(void)
@@ -76,8 +90,11 @@ ausf_context_t *ausf_self(void)
 
 static int ausf_context_prepare(void)
 {
+    instr_start_timing();
     self.nf_type = OpenAPI_nf_type_AUSF;
+    instr_state_logging_child("ausf_context_t", "nf_type", INSTR_MEM_ACTION_WRITE, "");
 
+    instr_stop_timing("ausf_context_prepare");
     return OGS_OK;
 }
 
@@ -124,93 +141,120 @@ int ausf_context_parse_config(void)
 
 ausf_ue_t *ausf_ue_add(char *suci)
 {
+    instr_start_timing();
     ausf_event_t e;
     ausf_ue_t *ausf_ue = NULL;
 
     ogs_assert(suci);
 
     ogs_pool_alloc(&ausf_ue_pool, &ausf_ue);
-    ogs_info("[state] ue pool add ue");
+    instr_state_logging("ausf_ue_pool", INSTR_MEM_ACTION_WRITE, "get free ue from pool");
+//    ogs_info("[state] ue pool add ue");
     ogs_assert(ausf_ue);
     memset(ausf_ue, 0, sizeof *ausf_ue);
-    ogs_info("[state] ue allocate");
+    instr_state_logging("ausf_ue_t", INSTR_MEM_ACTION_CLEAR, "");
+//    ogs_info("[state] ue allocate");
 
     ausf_ue->ctx_id =
         ogs_msprintf("%d", (int)ogs_pool_index(&ausf_ue_pool, ausf_ue));
     ogs_assert(ausf_ue->ctx_id);
-    ogs_info("[state] ue set ctx_id");
+    instr_state_logging_child("ausf_ue_t", "ctx_id", INSTR_MEM_ACTION_INIT, "");
+//    ogs_info("[state] ue set ctx_id");
 
     ausf_ue->suci = ogs_strdup(suci);
     ogs_assert(ausf_ue->suci);
-    ogs_info("[state] ue set suci");
+    instr_state_logging_child("ausf_ue_t", "suci", INSTR_MEM_ACTION_INIT, "");
+//    ogs_info("[state] ue set suci");
     ogs_hash_set(self.suci_hash, ausf_ue->suci, strlen(ausf_ue->suci), ausf_ue);
-    ogs_info("[state] context set suci_hash");
+    instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_NEW, "overwrite or create hash entry");
+//    ogs_info("[state] context set suci_hash");
 
     ausf_ue->supi = ogs_supi_from_suci(ausf_ue->suci);
     ogs_assert(ausf_ue->supi);
-    ogs_info("[state] ue set supi");
+    instr_state_logging_child("ausf_ue_t", "supi", INSTR_MEM_ACTION_INIT, "");
+//    ogs_info("[state] ue set supi");
     ogs_hash_set(self.supi_hash, ausf_ue->supi, strlen(ausf_ue->supi), ausf_ue);
-    ogs_info("[state] context set supi_hash");
+    instr_state_logging_child("ausf_context_t", "supi_hash", INSTR_MEM_ACTION_NEW, "overwrite or create hash entry");
+//    ogs_info("[state] context set supi_hash");
 
     memset(&e, 0, sizeof(e));
     e.ausf_ue = ausf_ue;
     ogs_fsm_create(&ausf_ue->sm, ausf_ue_state_initial, ausf_ue_state_final);
+    instr_state_logging_child("ausf_ue_t", "sm", INSTR_MEM_ACTION_WRITE, "fsm create");
     ogs_fsm_init(&ausf_ue->sm, &e);
-    ogs_info("[state] ue set sm");
+    instr_state_logging_child("ausf_ue_t", "sm", INSTR_MEM_ACTION_WRITE, "fsm init");
 
     ogs_list_add(&self.ausf_ue_list, ausf_ue);
-    ogs_info("[state] ue list add ue");
+    instr_state_logging_child("ausf_context_t", "ausf_ue_list", INSTR_MEM_ACTION_WRITE, "add ue to list");
+
+//    ogs_info("[state] ue list add ue");
+
+    instr_stop_timing("ausf_ue_add");
 
     return ausf_ue;
 }
 
 void ausf_ue_remove(ausf_ue_t *ausf_ue)
 {
+    instr_start_timing();
     ausf_event_t e;
 
     ogs_assert(ausf_ue);
 
     ogs_list_remove(&self.ausf_ue_list, ausf_ue);
-    ogs_info("[state] remove ue from list");
+    instr_state_logging_child("ausf_context_t", "ausf_ue_list", INSTR_MEM_ACTION_WRITE, "remove ue from list");
+//    ogs_info("[state] remove ue from list");
 
     memset(&e, 0, sizeof(e));
     e.ausf_ue = ausf_ue;
     ogs_fsm_fini(&ausf_ue->sm, &e);
+    instr_state_logging_child("ausf_ue_t", "sm", INSTR_MEM_ACTION_WRITE, "fsm fini");
     ogs_fsm_delete(&ausf_ue->sm);
-    ogs_info("[state] ue fini sm");
+    instr_state_logging_child("ausf_ue_t", "sm", INSTR_MEM_ACTION_WRITE, "fsm delete");
+//    ogs_info("[state] ue fini sm");
 
     /* Free SBI object memory */
     ogs_sbi_object_free(&ausf_ue->sbi);
-    ogs_info("[state] ue free sbi");
+    instr_state_logging_child("ausf_ue_t", "sbi", INSTR_MEM_ACTION_FREE, "");
+//    ogs_info("[state] ue free sbi");
 
     ogs_assert(ausf_ue->ctx_id);
     ogs_free(ausf_ue->ctx_id);
-    ogs_info("[state] ue free ctx_id");
+    instr_state_logging_child("ausf_ue_t", "ctx_id", INSTR_MEM_ACTION_FREE, "");
+//    ogs_info("[state] ue free ctx_id");
 
     ogs_assert(ausf_ue->suci);
     ogs_hash_set(self.suci_hash, ausf_ue->suci, strlen(ausf_ue->suci), NULL);
-    ogs_info("[state] context set suci_hash");
+    instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_WRITE, "remove entry from hash");
+//    ogs_info("[state] context set suci_hash");
     ogs_free(ausf_ue->suci);
-    ogs_info("[state] ue free suci");
+    instr_state_logging_child("ausf_ue_t", "suci", INSTR_MEM_ACTION_FREE, "");
+//    ogs_info("[state] ue free suci");
 
     ogs_assert(ausf_ue->supi);
     ogs_hash_set(self.supi_hash, ausf_ue->supi, strlen(ausf_ue->supi), NULL);
-    ogs_info("[state] context set supi_hash");
+    instr_state_logging_child("ausf_context_t", "supi_hash", INSTR_MEM_ACTION_WRITE, "remove entry from hash");
+//    ogs_info("[state] context set supi_hash");
     ogs_free(ausf_ue->supi);
-    ogs_info("[state] ue free supi");
+    instr_state_logging_child("ausf_ue_t", "supi", INSTR_MEM_ACTION_FREE, "");
+//    ogs_info("[state] ue free supi");
 
     if (ausf_ue->auth_events_url) {
       ogs_free(ausf_ue->auth_events_url);
-      ogs_info("[state] ue free auth_events_url");
+      instr_state_logging_child("ausf_ue_t", "auth_events_url", INSTR_MEM_ACTION_FREE, "");
+//      ogs_info("[state] ue free auth_events_url");
     }
 
     if (ausf_ue->serving_network_name) {
       ogs_free(ausf_ue->serving_network_name);
-      ogs_info("[state] ue free serving_network_name");
+      instr_state_logging_child("ausf_ue_t", "serving_network_name", INSTR_MEM_ACTION_FREE, "");
+//      ogs_info("[state] ue free serving_network_name");
     }
     
     ogs_pool_free(&ausf_ue_pool, ausf_ue);
-    ogs_info("[state] ue pool free ue");
+    instr_state_logging("ausf_ue_pool", INSTR_MEM_ACTION_WRITE, "mark ue as free in pool");
+//    ogs_info("[state] ue pool free ue");
+    instr_stop_timing("ausf_ue_remove");
 }
 
 void ausf_ue_remove_all()
@@ -261,9 +305,11 @@ void ausf_ue_select_nf(ausf_ue_t *ausf_ue, OpenAPI_nf_type_e nf_type)
 
     if (nf_type == OpenAPI_nf_type_NRF) {
       ogs_sbi_select_nrf(&ausf_ue->sbi, ausf_nf_state_registered);
-      ogs_info("[state] ue change sbi");
+      instr_state_logging_child("ausf_ue_t", "sbi", INSTR_MEM_ACTION_WRITE, "");
+//      ogs_info("[state] ue change sbi");
     } else {
       ogs_sbi_select_first_nf(&ausf_ue->sbi, nf_type, ausf_nf_state_registered);
-      ogs_info("[state] ue change sbi");
+      instr_state_logging_child("ausf_ue_t", "sbi", INSTR_MEM_ACTION_WRITE, "");
+//      ogs_info("[state] ue change sbi");
     }
 }

@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "sbi-path.h"
 
 static int server_cb(ogs_sbi_request_t *request, void *data)
@@ -151,7 +152,8 @@ bool ausf_sbi_discover_and_send(OpenAPI_nf_type_e target_nf_type,
     xact = ogs_sbi_xact_add(target_nf_type, &ausf_ue->sbi,
             (ogs_sbi_build_f)build, ausf_ue, data,
             ausf_timer_sbi_client_wait_expire);
-    ogs_info("[state] ue change sbi");
+    instr_state_logging_child("ausf_ue_t", "sbi",INSTR_MEM_ACTION_WRITE, "");
+//    ogs_info("[state] ue change sbi");
     if (!xact) {
         ogs_error("ausf_sbi_discover_and_send() failed");
         ogs_assert(true ==
