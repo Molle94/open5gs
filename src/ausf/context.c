@@ -268,14 +268,26 @@ void ausf_ue_remove_all()
 
 ausf_ue_t *ausf_ue_find_by_suci(char *suci)
 {
+    instr_start_timing();
     ogs_assert(suci);
-    return (ausf_ue_t *)ogs_hash_get(self.suci_hash, suci, strlen(suci));
+    ausf_ue_t *ausf_ue = (ausf_ue_t *)ogs_hash_get(self.suci_hash, suci, strlen(suci));
+    instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_READ, "");
+    instr_state_logging("ausf_ue_t", INSTR_MEM_ACTION_READ, "");
+
+    instr_stop_timing("ausf_ue_find_by_suci");
+    return ausf_ue;
 }
 
 ausf_ue_t *ausf_ue_find_by_supi(char *supi)
 {
+    instr_start_timing();
     ogs_assert(supi);
-    return (ausf_ue_t *)ogs_hash_get(self.supi_hash, supi, strlen(supi));
+    ausf_ue_t *ausf_ue = (ausf_ue_t *)ogs_hash_get(self.supi_hash, supi, strlen(supi));
+    instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_READ, "");
+    instr_state_logging("ausf_ue_t", INSTR_MEM_ACTION_READ, "");
+
+    instr_stop_timing("ausf_ue_find_by_supi");
+    return ausf_ue;
 }
 
 ausf_ue_t *ausf_ue_find_by_suci_or_supi(char *suci_or_supi)
@@ -289,13 +301,23 @@ ausf_ue_t *ausf_ue_find_by_suci_or_supi(char *suci_or_supi)
 
 ausf_ue_t *ausf_ue_find_by_ctx_id(char *ctx_id)
 {
+    instr_start_timing();
     ogs_assert(ctx_id);
-    return ogs_pool_find(&ausf_ue_pool, atoll(ctx_id));
+    ausf_ue_t *ausf_ue = ogs_pool_find(&ausf_ue_pool, atoll(ctx_id));
+    instr_state_logging("ausf_ue_pool", INSTR_MEM_ACTION_READ, "");
+    instr_state_logging("ausf_ue_t", INSTR_MEM_ACTION_READ, "");
+
+    instr_stop_timing("ausf_ue_find_by_ctx_id");
+    return ausf_ue;
 }
 
 ausf_ue_t *ausf_ue_cycle(ausf_ue_t *ausf_ue)
 {
-    return ogs_pool_cycle(&ausf_ue_pool, ausf_ue);
+    instr_start_timing();
+    ausf_ue_t *ausf_ue_ret = ogs_pool_cycle(&ausf_ue_pool, ausf_ue);
+
+    instr_stop_timing("ausf_ue_cycle");
+    return ausf_ue_ret;
 }
 
 void ausf_ue_select_nf(ausf_ue_t *ausf_ue, OpenAPI_nf_type_e nf_type)

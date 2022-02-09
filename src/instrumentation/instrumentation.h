@@ -13,6 +13,7 @@
 #define INSTR_MEM_ACTION_FREE "free"
 #define INSTR_MEM_ACTION_WRITE "write"
 #define INSTR_MEM_ACTION_INIT "init"
+#define INSTR_MEM_ACTION_READ "read"
 
 #define instr_state_logging_child(obj, child, op, msg) ogs_info("[state]{%s,%s,%s,%s}", obj, child, op, msg)
 #define instr_state_logging(obj, op, msg) instr_state_logging_child(obj, "", op, msg)
