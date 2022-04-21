@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "context.h"
 #include "ngap-path.h"
 #include "sbi-path.h"
@@ -149,6 +150,7 @@ bool smf_sbi_discover_and_send(OpenAPI_nf_type_e target_nf_type,
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     ogs_assert(stream);
@@ -195,6 +197,7 @@ void smf_namf_comm_send_n1_n2_message_transfer(
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     xact = ogs_sbi_xact_add(OpenAPI_nf_type_AMF, &sess->sbi,

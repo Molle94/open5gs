@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "fd-path.h"
 
 static struct session_handler *smf_gx_reg = NULL;
@@ -92,6 +93,7 @@ void smf_gx_send_ccr(smf_sess_t *sess, ogs_gtp_xact_t *xact,
 
     ogs_assert(sess->ipv4 || sess->ipv6);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     ogs_debug("[Credit-Control-Request]");

@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "context.h"
 #include "timer.h"
 #include "pfcp-path.h"
@@ -635,6 +636,7 @@ void smf_epc_n4_handle_session_establishment_response(
         smf_sess_t *eutran_sess = NULL;
 
         smf_ue = sess->smf_ue;
+        instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
         ogs_assert(smf_ue);
 
         ogs_assert(sess->session.name);
@@ -935,6 +937,7 @@ void smf_n4_handle_session_report_request(
 
     } else if (report_type.error_indication_report) {
         smf_ue_t *smf_ue = sess->smf_ue;
+        instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
         smf_sess_t *error_indication_session = NULL;
         ogs_assert(smf_ue);
 

@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "context.h"
 #include "gtp-path.h"
 #include "fd-path.h"
@@ -356,6 +357,7 @@ void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
 
                 if (sess) {
                     smf_ue = sess->smf_ue;
+                    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
                     ogs_assert(smf_ue);
                     ogs_assert(OGS_FSM_STATE(&sess->sm));
 
@@ -538,6 +540,7 @@ void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
             sess = smf_sess_cycle(sess);
             ogs_assert(sess);
             smf_ue = sess->smf_ue;
+            instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
             ogs_assert(smf_ue);
             smf_ue = smf_ue_cycle(smf_ue);
             ogs_assert(smf_ue);

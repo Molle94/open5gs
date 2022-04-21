@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "sbi-path.h"
 #include "nnrf-handler.h"
 #include "nsmf-handler.h"
@@ -27,6 +28,7 @@
 #include "ngap-handler.h"
 #include "pfcp-path.h"
 #include "ngap-path.h"
+#include "../instrumentation/instrumentation.h"
 
 void smf_gsm_state_initial(ogs_fsm_t *s, smf_event_t *e)
 {
@@ -106,6 +108,7 @@ void smf_gsm_state_operational(ogs_fsm_t *s, smf_event_t *e)
         sess = e->sess;
         ogs_assert(sess);
         smf_ue = sess->smf_ue;
+        instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
         ogs_assert(smf_ue);
 
         SWITCH(sbi_message->h.service.name)
@@ -267,6 +270,7 @@ void smf_gsm_state_operational(ogs_fsm_t *s, smf_event_t *e)
         stream = e->sbi.data;
         ogs_assert(stream);
         smf_ue = sess->smf_ue;
+        instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
         ogs_assert(smf_ue);
 
         switch (nas_message->gsm.h.message_type) {
@@ -342,6 +346,7 @@ void smf_gsm_state_operational(ogs_fsm_t *s, smf_event_t *e)
         stream = e->sbi.data;
         ogs_assert(stream);
         smf_ue = sess->smf_ue;
+        instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
         ogs_assert(smf_ue);
         pkbuf = e->pkbuf;
         ogs_assert(pkbuf);

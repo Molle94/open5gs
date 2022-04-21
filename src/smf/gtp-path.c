@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "context.h"
 
 #if HAVE_NETINET_IP_H
@@ -496,6 +497,7 @@ static void bearer_timeout(ogs_gtp_xact_t *xact, void *data)
     sess = bearer->sess;
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     type = xact->seq[0].type;

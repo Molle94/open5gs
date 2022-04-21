@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "nudm-build.h"
 
 ogs_sbi_request_t *smf_nudm_sdm_build_get(smf_sess_t *sess, void *data)
@@ -27,6 +28,7 @@ ogs_sbi_request_t *smf_nudm_sdm_build_get(smf_sess_t *sess, void *data)
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
     ogs_assert(smf_ue->supi);
 

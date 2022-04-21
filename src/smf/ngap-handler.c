@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "ngap-handler.h"
 #include "sbi-path.h"
 #include "pfcp-path.h"
@@ -47,6 +48,7 @@ int ngap_handle_pdu_session_resource_setup_response_transfer(
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     ogs_debug("PDUSessionResourceSetupResponseTransfer");
@@ -173,6 +175,7 @@ int ngap_handle_pdu_session_resource_modify_response_transfer(
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     ogs_debug("PDUSessionResourceModifyResponseTransfer");
@@ -262,6 +265,7 @@ int ngap_handle_path_switch_request_transfer(
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     ogs_debug("PathSwitchRequestTransfer");
@@ -382,6 +386,7 @@ int ngap_handle_handover_required_transfer(
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     ogs_debug("HandoverRequiredTransfer");
@@ -434,6 +439,7 @@ int ngap_handle_handover_request_ack(
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     ogs_debug("HandoverRequestAcknowledgeTransfer");

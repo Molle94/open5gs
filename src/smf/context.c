@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "context.h"
 
 static smf_context_t self;
@@ -42,66 +43,91 @@ void smf_context_init(void)
 {
     ogs_assert(context_initialized == 0);
 
-    /* Initial FreeDiameter Config */
-    memset(&g_diam_conf, 0, sizeof(ogs_diam_config_t));
-
-    /* Initialize SMF context */
-    memset(&self, 0, sizeof(smf_context_t));
-    self.diam_config = &g_diam_conf;
-
     ogs_log_install_domain(&__ogs_ngap_domain, "ngap", ogs_core()->log.level);
     ogs_log_install_domain(&__ogs_nas_domain, "nas", ogs_core()->log.level);
     ogs_log_install_domain(&__ogs_diam_domain, "diam", ogs_core()->log.level);
     ogs_log_install_domain(&__smf_log_domain, "smf", ogs_core()->log.level);
     ogs_log_install_domain(&__gsm_log_domain, "gsm", ogs_core()->log.level);
 
+    instr_start_timing();
+
+    /* Initial FreeDiameter Config */
+    memset(&g_diam_conf, 0, sizeof(ogs_diam_config_t));
+
+    /* Initialize SMF context */
+    memset(&self, 0, sizeof(smf_context_t));
+    instr_state_logging_v2(smf_context_t, INSTR_MEM_ACTION_CLEAR,"");
+    self.diam_config = &g_diam_conf;
+    instr_state_logging_child_v2(smf_context_t, diam_config, INSTR_MEM_ACTION_WRITE, "");
+
     ogs_pool_init(&smf_ue_pool, ogs_app()->max.ue);
+    instr_state_logging_f_v2(smf_ue_pool, INSTR_MEM_ACTION_INIT, "pool size: %lu", ogs_app()->max.ue);
     ogs_pool_init(&smf_sess_pool, ogs_app()->pool.sess);
+    instr_state_logging_f_v2(smf_sess_pool, INSTR_MEM_ACTION_INIT, "pool size: %lu", ogs_app()->pool.sess);
     ogs_pool_init(&smf_bearer_pool, ogs_app()->pool.bearer);
+    instr_state_logging_f_v2(smf_bearer_pool, INSTR_MEM_ACTION_INIT, "pool size: %lu", ogs_app()->pool.bearer);
 
     ogs_pool_init(&smf_pf_pool, ogs_app()->pool.bearer * OGS_MAX_NUM_OF_PF);
+    instr_state_logging_f_v2(smf_pf_pool, INSTR_MEM_ACTION_INIT, "pool size: %lu", ogs_app()->pool.bearer * OGS_MAX_NUM_OF_PF);
 
     self.supi_hash = ogs_hash_make();
+    instr_state_logging_child_v2(smf_context_t, supi_hash, INSTR_MEM_ACTION_INIT, "");
     ogs_assert(self.supi_hash);
     self.imsi_hash = ogs_hash_make();
+    instr_state_logging_child_v2(smf_context_t, imsi_hash, INSTR_MEM_ACTION_INIT, "");
     ogs_assert(self.imsi_hash);
     self.ipv4_hash = ogs_hash_make();
+    instr_state_logging_child_v2(smf_context_t, ipv4_hash, INSTR_MEM_ACTION_INIT, "");
     ogs_assert(self.ipv4_hash);
     self.ipv6_hash = ogs_hash_make();
+    instr_state_logging_child_v2(smf_context_t, ipv6_hash, INSTR_MEM_ACTION_INIT, "");
     ogs_assert(self.ipv6_hash);
     self.n1n2message_hash = ogs_hash_make();
+    instr_state_logging_child_v2(smf_context_t, n1n2message_hash, INSTR_MEM_ACTION_INIT, "");
     ogs_assert(self.n1n2message_hash);
 
-
     context_initialized = 1;
+    instr_stop_timing("smf_context_init");
 }
 
 void smf_context_final(void)
 {
+    instr_start_timing();
     ogs_assert(context_initialized == 1);
 
     smf_ue_remove_all();
 
     ogs_assert(self.supi_hash);
     ogs_hash_destroy(self.supi_hash);
+    instr_state_logging_child_v2(smf_context_t, supi_hash, INSTR_MEM_ACTION_FREE, "");
     ogs_assert(self.imsi_hash);
     ogs_hash_destroy(self.imsi_hash);
+    instr_state_logging_child_v2(smf_context_t, imsi_hash, INSTR_MEM_ACTION_FREE, "");
     ogs_assert(self.ipv4_hash);
     ogs_hash_destroy(self.ipv4_hash);
+    instr_state_logging_child_v2(smf_context_t, ipv4_hash, INSTR_MEM_ACTION_FREE, "");
     ogs_assert(self.ipv6_hash);
     ogs_hash_destroy(self.ipv6_hash);
+    instr_state_logging_child_v2(smf_context_t, ipv6_hash, INSTR_MEM_ACTION_FREE, "");
     ogs_assert(self.n1n2message_hash);
     ogs_hash_destroy(self.n1n2message_hash);
+    instr_state_logging_child_v2(smf_context_t, n1n2message_hash, INSTR_MEM_ACTION_FREE, "");
 
     ogs_pool_final(&smf_ue_pool);
+    instr_state_logging_v2(smf_ue_pool, INSTR_MEM_ACTION_FREE, "");
     ogs_pool_final(&smf_bearer_pool);
+    instr_state_logging_v2(smf_bearer_pool, INSTR_MEM_ACTION_FREE, "");
     ogs_pool_final(&smf_sess_pool);
+    instr_state_logging_v2(smf_sess_pool, INSTR_MEM_ACTION_FREE, "");
 
     ogs_pool_final(&smf_pf_pool);
+    instr_state_logging_v2(smf_pf_pool, INSTR_MEM_ACTION_FREE, "");
 
     ogs_gtp_node_remove_all(&self.sgw_s5c_list);
+    instr_state_logging_child_v2(smf_context_t, sgw_s5c_list, INSTR_MEM_ACTION_FREE, "");
 
     context_initialized = 0;
+    instr_stop_timing("smf_context_final");
 }
 
 smf_context_t *smf_self(void)
@@ -113,14 +139,17 @@ static int smf_context_prepare(void)
 {
     self.diam_config->cnf_port = DIAMETER_PORT;
     self.diam_config->cnf_port_tls = DIAMETER_SECURE_PORT;
+    instr_state_logging_child_v2(smf_context_t, diam_config, INSTR_MEM_ACTION_WRITE, "");
     self.nf_type = OpenAPI_nf_type_SMF;
+    instr_state_logging_child_v2(smf_context_t, nf_type, INSTR_MEM_ACTION_WRITE, "");
 
     return OGS_OK;
 }
 
-static int smf_context_validation(void)
+static int _smf_context_validation(void)
 {
     ogs_sbi_nf_info_t *nf_info = NULL;
+    instr_state_logging_v2(smf_context_t, INSTR_MEM_ACTION_READ, "");
 
     if (self.dns[0] == NULL && self.dns6[0] == NULL) {
         ogs_error("No smf.dns in '%s'", ogs_app()->file);
@@ -167,6 +196,14 @@ static int smf_context_validation(void)
     return OGS_OK;
 }
 
+static int smf_context_validation(void)
+{
+  instr_start_timing();
+  int return_value = _smf_context_validation();
+  instr_stop_timing("smf_context_validation");
+  return return_value;
+}
+
 int smf_context_parse_config(void)
 {
     int rv;
@@ -195,6 +232,7 @@ int smf_context_parse_config(void)
                     ogs_assert(node);
                     if (node->type == YAML_SCALAR_NODE) {
                         self.diam_conf_path = ogs_yaml_iter_value(&smf_iter);
+                        instr_state_logging_child_v2(smf_context_t, diam_conf_path, INSTR_MEM_ACTION_WRITE, "");
                     } else if (node->type == YAML_MAPPING_NODE) {
                         ogs_yaml_iter_t fd_iter;
                         ogs_yaml_iter_recurse(&smf_iter, &fd_iter);
@@ -205,21 +243,27 @@ int smf_context_parse_config(void)
                             if (!strcmp(fd_key, "identity")) {
                                 self.diam_config->cnf_diamid = 
                                     ogs_yaml_iter_value(&fd_iter);
+                                instr_state_logging_child_v2(smf_context_t, diam_config, INSTR_MEM_ACTION_WRITE, "");
                             } else if (!strcmp(fd_key, "realm")) {
                                 self.diam_config->cnf_diamrlm = 
                                     ogs_yaml_iter_value(&fd_iter);
+                                instr_state_logging_child_v2(smf_context_t, diam_config, INSTR_MEM_ACTION_WRITE, "");
                             } else if (!strcmp(fd_key, "port")) {
                                 const char *v = ogs_yaml_iter_value(&fd_iter);
-                                if (v) self.diam_config->cnf_port = atoi(v);
+                                if (v) {self.diam_config->cnf_port = atoi(v);
+                                  instr_state_logging_child_v2(smf_context_t, diam_config, INSTR_MEM_ACTION_WRITE, "");}
                             } else if (!strcmp(fd_key, "sec_port")) {
                                 const char *v = ogs_yaml_iter_value(&fd_iter);
-                                if (v) self.diam_config->cnf_port_tls = atoi(v);
+                                if (v) {self.diam_config->cnf_port_tls = atoi(v);
+                                  instr_state_logging_child_v2(smf_context_t, diam_config, INSTR_MEM_ACTION_WRITE, "");}
                             } else if (!strcmp(fd_key, "listen_on")) {
                                 self.diam_config->cnf_addr = 
                                     ogs_yaml_iter_value(&fd_iter);
+                                instr_state_logging_child_v2(smf_context_t, diam_config, INSTR_MEM_ACTION_WRITE, "");
                             } else if (!strcmp(fd_key, "no_fwd")) {
                                 self.diam_config->cnf_flags.no_fwd =
                                     ogs_yaml_iter_bool(&fd_iter);
+                                instr_state_logging_child_v2(smf_context_t, diam_config, INSTR_MEM_ACTION_WRITE, "");
                             } else if (!strcmp(fd_key, "load_extension")) {
                                 ogs_yaml_iter_t ext_array, ext_iter;
                                 ogs_yaml_iter_recurse(&fd_iter, &ext_array);
@@ -266,6 +310,7 @@ int smf_context_parse_config(void)
                                             ext[self.diam_config->num_of_ext].
                                                 conf = conf;
                                         self.diam_config->num_of_ext++;
+                                        instr_state_logging_child_v2(smf_context_t, diam_config, INSTR_MEM_ACTION_WRITE, "");
                                     }
                                 } while (ogs_yaml_iter_type(&ext_array) ==
                                         YAML_SEQUENCE_NODE);
@@ -323,6 +368,7 @@ int smf_context_parse_config(void)
                                             conn[self.diam_config->num_of_conn].
                                                 port = port;
                                         self.diam_config->num_of_conn++;
+                                        instr_state_logging_child_v2(smf_context_t, diam_config, INSTR_MEM_ACTION_WRITE, "");
                                     }
                                 } while (ogs_yaml_iter_type(&conn_array) ==
                                         YAML_SEQUENCE_NODE);
@@ -360,12 +406,14 @@ int smf_context_parse_config(void)
                                     ogs_warn("Ignore DNS : %s", v);
                                 else if (self.dns[0]) self.dns[1] = v;
                                 else self.dns[0] = v;
+                                instr_state_logging_child_v2(smf_context_t, dns, INSTR_MEM_ACTION_WRITE, "");
                             }
                             else if (ipsub.family == AF_INET6) {
                                 if (self.dns6[0] && self.dns6[1])
                                     ogs_warn("Ignore DNS : %s", v);
                                 else if (self.dns6[0]) self.dns6[1] = v;
                                 else self.dns6[0] = v;
+                                instr_state_logging_child_v2(smf_context_t, dns6, INSTR_MEM_ACTION_WRITE, "");
                             } else
                                 ogs_warn("Ignore DNS : %s", v);
                         }
@@ -376,6 +424,7 @@ int smf_context_parse_config(void)
                     ogs_assert(ogs_yaml_iter_type(&smf_iter) !=
                             YAML_SCALAR_NODE);
                     self.mtu = atoi(ogs_yaml_iter_value(&smf_iter));
+                    instr_state_logging_child_v2(smf_context_t, mtu, INSTR_MEM_ACTION_WRITE, "");
                     ogs_assert(self.mtu);
                 } else if (!strcmp(smf_key, "p-cscf")) {
                     ogs_yaml_iter_t p_cscf_iter;
@@ -384,7 +433,9 @@ int smf_context_parse_config(void)
                         YAML_MAPPING_NODE);
 
                     self.num_of_p_cscf = 0;
+                    instr_state_logging_child_v2(smf_context_t, num_of_p_cscf, INSTR_MEM_ACTION_INIT, "");
                     self.num_of_p_cscf6 = 0;
+                    instr_state_logging_child_v2(smf_context_t, num_of_p_cscf6, INSTR_MEM_ACTION_INIT, "");
                     do {
                         const char *v = NULL;
 
@@ -404,11 +455,15 @@ int smf_context_parse_config(void)
                                 if (self.num_of_p_cscf >= MAX_NUM_OF_P_CSCF)
                                     ogs_warn("Ignore P-CSCF : %s", v);
                                 else self.p_cscf[self.num_of_p_cscf++] = v;
+                                instr_state_logging_child_v2(smf_context_t, p_cscf, INSTR_MEM_ACTION_WRITE, "");
+                                instr_state_logging_child_v2(smf_context_t, num_of_p_cscf, INSTR_MEM_ACTION_WRITE, "");
                             }
                             else if (ipsub.family == AF_INET6) {
                                 if (self.num_of_p_cscf6 >= MAX_NUM_OF_P_CSCF)
                                     ogs_warn("Ignore P-CSCF : %s", v);
                                 else self.p_cscf6[self.num_of_p_cscf6++] = v;
+                                instr_state_logging_child_v2(smf_context_t, p_cscf6, INSTR_MEM_ACTION_WRITE, "");
+                                instr_state_logging_child_v2(smf_context_t, num_of_p_cscf6, INSTR_MEM_ACTION_WRITE, "");
                             } else
                                 ogs_warn("Ignore P-CSCF : %s", v);
                         }
@@ -773,6 +828,7 @@ int smf_context_parse_config(void)
 
 smf_ue_t *smf_ue_add_by_supi(char *supi)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
 
     ogs_assert(supi);
@@ -786,17 +842,21 @@ smf_ue_t *smf_ue_add_by_supi(char *supi)
     smf_ue->supi = ogs_strdup(supi);
     ogs_assert(smf_ue->supi);
     ogs_hash_set(self.supi_hash, smf_ue->supi, strlen(smf_ue->supi), smf_ue);
+    instr_state_logging_child_v2(smf_context_t, supi_hash, INSTR_MEM_ACTION_WRITE, "");
 
     ogs_list_add(&self.smf_ue_list, smf_ue);
+    instr_state_logging_child_v2(smf_context_t, smf_ue_list, INSTR_MEM_ACTION_WRITE, "");
 
     ogs_info("[Added] Number of SMF-UEs is now %d",
             ogs_list_count(&self.smf_ue_list));
 
+    instr_stop_timing("smf_ue_add_by_supi");
     return smf_ue;
 }
 
 smf_ue_t *smf_ue_add_by_imsi(uint8_t *imsi, int imsi_len)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
 
     ogs_assert(imsi);
@@ -812,36 +872,46 @@ smf_ue_t *smf_ue_add_by_imsi(uint8_t *imsi, int imsi_len)
     memcpy(smf_ue->imsi, imsi, smf_ue->imsi_len);
     ogs_buffer_to_bcd(smf_ue->imsi, smf_ue->imsi_len, smf_ue->imsi_bcd);
     ogs_hash_set(self.imsi_hash, smf_ue->imsi, smf_ue->imsi_len, smf_ue);
+    instr_state_logging_child_v2(smf_context_t, imsi_hash, INSTR_MEM_ACTION_WRITE, "");
 
     ogs_list_add(&self.smf_ue_list, smf_ue);
+    instr_state_logging_child_v2(smf_context_t, smf_ue_list, INSTR_MEM_ACTION_WRITE, "");
 
     ogs_info("[Added] Number of SMF-UEs is now %d",
             ogs_list_count(&self.smf_ue_list));
 
+    instr_stop_timing("smf_ue_add_by_imsi");
     return smf_ue;
 }
 
 void smf_ue_remove(smf_ue_t *smf_ue)
 {
+    instr_start_timing();
     ogs_assert(smf_ue);
 
     ogs_list_remove(&self.smf_ue_list, smf_ue);
+    instr_state_logging_child_v2(smf_context_t, smf_ue_list, INSTR_MEM_ACTION_WRITE, "");
 
     smf_sess_remove_all(smf_ue);
 
     if (smf_ue->supi) {
         ogs_hash_set(self.supi_hash, smf_ue->supi, strlen(smf_ue->supi), NULL);
+        instr_state_logging_child_v2(smf_context_t, supi_hash, INSTR_MEM_ACTION_WRITE, "");
         ogs_free(smf_ue->supi);
+        instr_state_logging_child_v2(smf_ue_t, supi, INSTR_MEM_ACTION_WRITE, "");
     }
 
     if (smf_ue->imsi_len) {
         ogs_hash_set(self.imsi_hash, smf_ue->imsi, smf_ue->imsi_len, NULL);
+        instr_state_logging_child_v2(smf_context_t, imsi_hash, INSTR_MEM_ACTION_WRITE, "");
     }
 
     ogs_pool_free(&smf_ue_pool, smf_ue);
 
     ogs_info("[Removed] Number of SMF-UEs is now %d",
             ogs_list_count(&self.smf_ue_list));
+
+    instr_stop_timing("smf_ue_remove");
 }
 
 void smf_ue_remove_all(void)
@@ -854,15 +924,23 @@ void smf_ue_remove_all(void)
 
 smf_ue_t *smf_ue_find_by_supi(char *supi)
 {
+    instr_start_timing();
     ogs_assert(supi);
-    return (smf_ue_t *)ogs_hash_get(self.supi_hash, supi, strlen(supi));
+    smf_ue_t *return_value = (smf_ue_t *)ogs_hash_get(self.supi_hash, supi, strlen(supi));
+    instr_state_logging_child_v2(smf_context_t, supi_hash, INSTR_MEM_ACTION_READ, "");
+    instr_stop_timing("smf_ue_find_by_supi");
+    return return_value;
 }
 
 smf_ue_t *smf_ue_find_by_imsi(uint8_t *imsi, int imsi_len)
 {
+    instr_start_timing();
     ogs_assert(imsi);
     ogs_assert(imsi_len);
-    return (smf_ue_t *)ogs_hash_get(self.imsi_hash, imsi, imsi_len);
+    smf_ue_t *return_value = (smf_ue_t *)ogs_hash_get(self.imsi_hash, imsi, imsi_len);
+    instr_state_logging_child_v2(smf_context_t, imsi_hash, INSTR_MEM_ACTION_READ, "");
+    instr_stop_timing("smf_ue_find_by_imsi");
+    return return_value;
 }
 
 static bool compare_ue_info(ogs_pfcp_node_t *node, smf_sess_t *sess)
@@ -931,6 +1009,7 @@ static ogs_pfcp_node_t *selected_upf_node(
 
 void smf_sess_select_upf(smf_sess_t *sess)
 {
+    instr_start_timing();
     char buf[OGS_ADDRSTRLEN];
 
     ogs_assert(sess);
@@ -950,6 +1029,7 @@ void smf_sess_select_upf(smf_sess_t *sess)
     OGS_SETUP_PFCP_NODE(sess, ogs_pfcp_self()->pfcp_node);
     ogs_debug("UE using UPF on IP[%s]",
             OGS_ADDR(&ogs_pfcp_self()->pfcp_node->addr, buf));
+    instr_stop_timing("smf_sess_select_upf");
 }
 
 smf_sess_t *smf_sess_add_by_apn(smf_ue_t *smf_ue, char *apn, uint8_t rat_type)
@@ -1185,11 +1265,13 @@ smf_sess_t *smf_sess_add_by_sbi_message(ogs_sbi_message_t *message)
 
 void smf_sess_set_ue_ip(smf_sess_t *sess)
 {
+    instr_start_timing();
     ogs_pfcp_subnet_t *subnet6 = NULL;
     smf_ue_t *smf_ue = NULL;
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     if (sess->session.session_type == OGS_PDU_SESSION_TYPE_IPV4V6) {
@@ -1225,11 +1307,13 @@ void smf_sess_set_ue_ip(smf_sess_t *sess)
     if (sess->ipv4) {
         ogs_hash_set(smf_self()->ipv4_hash,
                 sess->ipv4->addr, OGS_IPV4_LEN, NULL);
+        instr_state_logging_child_v2(smf_context_t, ipv4_hash, INSTR_MEM_ACTION_WRITE, "");
         ogs_pfcp_ue_ip_free(sess->ipv4);
     }
     if (sess->ipv6) {
         ogs_hash_set(smf_self()->ipv6_hash,
                 sess->ipv6->addr, OGS_IPV6_DEFAULT_PREFIX_LEN >> 3, NULL);
+        instr_state_logging_child_v2(smf_context_t, ipv6_hash, INSTR_MEM_ACTION_WRITE, "");
         ogs_pfcp_ue_ip_free(sess->ipv6);
     }
 
@@ -1240,6 +1324,7 @@ void smf_sess_set_ue_ip(smf_sess_t *sess)
         sess->session.paa.addr = sess->ipv4->addr[0];
         ogs_hash_set(smf_self()->ipv4_hash,
                 sess->ipv4->addr, OGS_IPV4_LEN, sess);
+        instr_state_logging_child_v2(smf_context_t, ipv4_hash, INSTR_MEM_ACTION_WRITE, "");
     } else if (sess->session.session_type == OGS_PDU_SESSION_TYPE_IPV6) {
         sess->ipv6 = ogs_pfcp_ue_ip_alloc(
                 AF_INET6, sess->session.name, sess->session.ue_ip.addr6);
@@ -1252,6 +1337,7 @@ void smf_sess_set_ue_ip(smf_sess_t *sess)
         memcpy(sess->session.paa.addr6, sess->ipv6->addr, OGS_IPV6_LEN);
         ogs_hash_set(smf_self()->ipv6_hash,
                 sess->ipv6->addr, OGS_IPV6_DEFAULT_PREFIX_LEN >> 3, sess);
+        instr_state_logging_child_v2(smf_context_t, ipv6_hash, INSTR_MEM_ACTION_WRITE, "");
     } else if (sess->session.session_type == OGS_PDU_SESSION_TYPE_IPV4V6) {
         sess->ipv4 = ogs_pfcp_ue_ip_alloc(AF_INET,
                 sess->session.name, (uint8_t *)&sess->session.ue_ip.addr);
@@ -1268,18 +1354,23 @@ void smf_sess_set_ue_ip(smf_sess_t *sess)
         memcpy(sess->session.paa.both.addr6, sess->ipv6->addr, OGS_IPV6_LEN);
         ogs_hash_set(smf_self()->ipv4_hash,
                 sess->ipv4->addr, OGS_IPV4_LEN, sess);
+        instr_state_logging_child_v2(smf_context_t, ipv4_hash, INSTR_MEM_ACTION_WRITE, "");
         ogs_hash_set(smf_self()->ipv6_hash,
                 sess->ipv6->addr, OGS_IPV6_DEFAULT_PREFIX_LEN >> 3, sess);
+        instr_state_logging_child_v2(smf_context_t, ipv6_hash, INSTR_MEM_ACTION_WRITE, "");
     } else {
         ogs_fatal("Invalid sess->session.session_type[%d]",
                 sess->session.session_type);
         ogs_assert_if_reached();
     }
+
+    instr_stop_timing("smf_sess_set_ue_ip");
 }
 
 void smf_sess_set_paging_n1n2message_location(
         smf_sess_t *sess, char *n1n2message_location)
 {
+    instr_start_timing();
     ogs_assert(sess);
     ogs_assert(n1n2message_location);
 
@@ -1288,22 +1379,28 @@ void smf_sess_set_paging_n1n2message_location(
                 sess->paging.n1n2message_location,
                 strlen(sess->paging.n1n2message_location),
                 NULL);
+        instr_state_logging_child_v2(smf_context_t, n1n2message_hash, INSTR_MEM_ACTION_WRITE, "");
         ogs_free(sess->paging.n1n2message_location);
+        instr_state_logging_child_v2(smf_sess_t, paging, INSTR_MEM_ACTION_FREE, "");
     }
 
     sess->paging.n1n2message_location = ogs_strdup(n1n2message_location);
+    instr_state_logging_child_v2(smf_sess_t, paging, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(sess->paging.n1n2message_location);
 
     ogs_hash_set(self.n1n2message_hash,
             sess->paging.n1n2message_location,
             strlen(sess->paging.n1n2message_location),
             sess);
+    instr_state_logging_child_v2(smf_context_t, n1n2message_hash, INSTR_MEM_ACTION_WRITE, "");
+    instr_stop_timing("smf_sess_set_paging_n1n2message_location");
 }
 
 smf_sess_t *smf_sess_find_by_error_indication_report(
         smf_ue_t *smf_ue,
         ogs_pfcp_tlv_error_indication_report_t *error_indication_report)
 {
+  instr_start_timing();
     smf_sess_t *sess = NULL;
     ogs_pfcp_f_teid_t *remote_f_teid = NULL;
 
@@ -1316,11 +1413,13 @@ smf_sess_t *smf_sess_find_by_error_indication_report(
 
     if (error_indication_report->presence == 0) {
         ogs_error("No Error Indication Report");
+        instr_stop_timing_autofun();
         return NULL;
     }
 
     if (error_indication_report->remote_f_teid.presence == 0) {
         ogs_error("No Remote F-TEID");
+        instr_stop_timing_autofun();
         return NULL;
     }
 
@@ -1330,6 +1429,7 @@ smf_sess_t *smf_sess_find_by_error_indication_report(
     teid = be32toh(remote_f_teid->teid);
     if (remote_f_teid->ipv4 && remote_f_teid->ipv6) {
         ogs_error("User plane should not set both IPv4 and IPv6");
+        instr_stop_timing_autofun();
         return NULL;
     } else if (remote_f_teid->ipv4) {
         len = OGS_IPV4_LEN;
@@ -1339,6 +1439,7 @@ smf_sess_t *smf_sess_find_by_error_indication_report(
         memcpy(addr, remote_f_teid->addr6, len);
     } else {
         ogs_error("No IPv4 and IPv6");
+        instr_stop_timing_autofun();
         return NULL;
     }
 
@@ -1346,9 +1447,11 @@ smf_sess_t *smf_sess_find_by_error_indication_report(
         if (teid == sess->gnb_n3_teid) {
             if (len == OGS_IPV4_LEN && sess->gnb_n3_ip.ipv4 &&
                 memcmp(addr, &sess->gnb_n3_ip.addr, len) == 0) {
+              instr_stop_timing_autofun();
                 return sess;
             } else if (len == OGS_IPV6_LEN && sess->gnb_n3_ip.ipv6 &&
                         memcmp(addr, sess->gnb_n3_ip.addr6, len) == 0) {
+              instr_stop_timing_autofun();
                 return sess;
             }
         }
@@ -1359,11 +1462,13 @@ smf_sess_t *smf_sess_find_by_error_indication_report(
             teid, len, be32toh(addr[0]), be32toh(addr[1]),
             be32toh(addr[2]), be32toh(addr[3]));
 
+    instr_stop_timing_autofun();
     return NULL;
 }
 
 void smf_sess_remove(smf_sess_t *sess)
 {
+    instr_start_timing();
     int i;
     smf_ue_t *smf_ue = NULL;
     smf_event_t e;
@@ -1373,6 +1478,7 @@ void smf_sess_remove(smf_sess_t *sess)
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
    
     ogs_info("Removed Session: UE IMSI:[%s] DNN:[%s:%d] IPv4:[%s] IPv6:[%s]",
@@ -1400,12 +1506,16 @@ void smf_sess_remove(smf_sess_t *sess)
 
     if (sess->ipv4) {
         ogs_hash_set(self.ipv4_hash, sess->ipv4->addr, OGS_IPV4_LEN, NULL);
+        instr_state_logging_child_v2(smf_context_t, ipv4_hash, INSTR_MEM_ACTION_WRITE, "");
         ogs_pfcp_ue_ip_free(sess->ipv4);
+        instr_state_logging_child_v2(smf_sess_t, ipv4, INSTR_MEM_ACTION_FREE, "");
     }
     if (sess->ipv6) {
         ogs_hash_set(self.ipv6_hash,
                 sess->ipv6->addr, OGS_IPV6_DEFAULT_PREFIX_LEN >> 3, NULL);
+        instr_state_logging_child_v2(smf_context_t, ipv6_hash, INSTR_MEM_ACTION_WRITE, "");
         ogs_pfcp_ue_ip_free(sess->ipv6);
+        instr_state_logging_child_v2(smf_sess_t, ipv6, INSTR_MEM_ACTION_FREE, "");
     }
 
     if (sess->paging.n1n2message_location) {
@@ -1413,7 +1523,9 @@ void smf_sess_remove(smf_sess_t *sess)
                 sess->paging.n1n2message_location,
                 strlen(sess->paging.n1n2message_location),
                 NULL);
+        instr_state_logging_child_v2(smf_context_t, n1n2message_hash, INSTR_MEM_ACTION_WRITE, "");
         ogs_free(sess->paging.n1n2message_location);
+        instr_state_logging_child_v2(smf_sess_t, paging, INSTR_MEM_ACTION_FREE, "");
     }
 
     if (sess->sm_context_ref)
@@ -1462,6 +1574,7 @@ void smf_sess_remove(smf_sess_t *sess)
     ogs_pool_free(&smf_sess_pool, sess);
 
     stats_remove_smf_session();
+    instr_stop_timing("smf_sess_remove");
 }
 
 void smf_sess_remove_all(smf_ue_t *smf_ue)
@@ -1476,7 +1589,11 @@ void smf_sess_remove_all(smf_ue_t *smf_ue)
 
 smf_sess_t *smf_sess_find(uint32_t index)
 {
-    return ogs_pool_find(&smf_sess_pool, index);
+    instr_start_timing();
+    smf_sess_t *return_value = ogs_pool_find(&smf_sess_pool, index);
+    instr_state_logging_v2(smf_sess_pool, INSTR_MEM_ACTION_READ, "");
+    instr_stop_timing_autofun();
+    return return_value;
 }
 
 smf_sess_t *smf_sess_find_by_teid(uint32_t teid)
@@ -1491,32 +1608,41 @@ smf_sess_t *smf_sess_find_by_seid(uint64_t seid)
 
 smf_sess_t *smf_sess_find_by_apn(smf_ue_t *smf_ue, char *apn, uint8_t rat_type)
 {
+    instr_start_timing();
     smf_sess_t *sess = NULL;
 
     ogs_assert(smf_ue);
     ogs_assert(apn);
 
+
     ogs_list_for_each(&smf_ue->sess_list, sess) {
         if (ogs_strcasecmp(sess->session.name, apn) == 0 &&
-            sess->gtp_rat_type == rat_type)
-            return sess;
+            sess->gtp_rat_type == rat_type) {
+          instr_stop_timing_autofun();
+          return sess;
+        }
     }
 
+    instr_stop_timing_autofun();
     return NULL;
 }
 
 smf_sess_t *smf_sess_find_by_psi(smf_ue_t *smf_ue, uint8_t psi)
 {
+    instr_start_timing();
     smf_sess_t *sess = NULL;
 
     ogs_assert(smf_ue);
     ogs_assert(psi != OGS_NAS_PDU_SESSION_IDENTITY_UNASSIGNED);
 
     ogs_list_for_each(&smf_ue->sess_list, sess) {
-        if (sess->psi == psi)
-            return sess;
+        if (sess->psi == psi) {
+          instr_stop_timing("smf_sess_find_by_psi");
+          return sess;
+        }
     }
 
+    instr_stop_timing("smf_sess_find_by_psi");
     return NULL;
 }
 
@@ -1534,29 +1660,42 @@ smf_sess_t *smf_sess_find_by_sm_context_ref(char *sm_context_ref)
 
 smf_sess_t *smf_sess_find_by_ipv4(uint32_t addr)
 {
+  instr_start_timing();
     ogs_assert(self.ipv4_hash);
-    return (smf_sess_t *)ogs_hash_get(self.ipv4_hash, &addr, OGS_IPV4_LEN);
+    smf_sess_t *ret_value = (smf_sess_t *)ogs_hash_get(self.ipv4_hash, &addr, OGS_IPV4_LEN);
+    instr_state_logging_child_v2(smf_context_t, ipv4_hash, INSTR_MEM_ACTION_READ, "");
+    instr_stop_timing_autofun();
+    return ret_value;
 }
 
 smf_sess_t *smf_sess_find_by_ipv6(uint32_t *addr6)
 {
+    instr_start_timing();
     ogs_assert(self.ipv6_hash);
     ogs_assert(addr6);
-    return (smf_sess_t *)ogs_hash_get(
-            self.ipv6_hash, addr6, OGS_IPV6_DEFAULT_PREFIX_LEN >> 3);
+    smf_sess_t *ret_value = (smf_sess_t *)ogs_hash_get(
+        self.ipv6_hash, addr6, OGS_IPV6_DEFAULT_PREFIX_LEN >> 3);
+    instr_state_logging_child_v2(smf_context_t, ipv6_hash, INSTR_MEM_ACTION_READ, "");
+    instr_stop_timing_autofun();
+    return ret_value;
 }
 
 smf_sess_t *smf_sess_find_by_paging_n1n2message_location(
         char *n1n2message_location)
 {
+    instr_start_timing();
     ogs_assert(self.n1n2message_hash);
     ogs_assert(n1n2message_location);
-    return (smf_sess_t *)ogs_hash_get(self.n1n2message_hash,
-            n1n2message_location, strlen(n1n2message_location));
+    smf_sess_t *ret_value = (smf_sess_t *)ogs_hash_get(self.n1n2message_hash,
+                                           n1n2message_location, strlen(n1n2message_location));
+    instr_state_logging_child_v2(smf_context_t, n1n2message_hash, INSTR_MEM_ACTION_READ, "");
+    instr_stop_timing_autofun();
+    return ret_value;
 }
 
 smf_bearer_t *smf_qos_flow_add(smf_sess_t *sess)
 {
+    instr_start_timing();
     smf_bearer_t *qos_flow = NULL;
 
     ogs_pfcp_pdr_t *dl_pdr = NULL;
@@ -1651,11 +1790,13 @@ smf_bearer_t *smf_qos_flow_add(smf_sess_t *sess)
 
     ogs_list_add(&sess->bearer_list, qos_flow);
 
+    instr_stop_timing("smf_qos_flow_add");
     return qos_flow;
 }
 
 void smf_sess_create_indirect_data_forwarding(smf_sess_t *sess)
 {
+    instr_start_timing();
     smf_bearer_t *qos_flow = NULL;
 
     ogs_assert(sess);
@@ -1732,10 +1873,12 @@ void smf_sess_create_indirect_data_forwarding(smf_sess_t *sess)
          * (lowest precedence value) */
         pdr->precedence = OGS_PFCP_INDIRECT_PDR_PRECEDENCE;
     }
+    instr_stop_timing("smf_sess_create_indirect_data_forwarding");
 }
 
 bool smf_sess_have_indirect_data_forwarding(smf_sess_t *sess)
 {
+    instr_start_timing();
     ogs_pfcp_pdr_t *pdr = NULL;
 
     ogs_assert(sess);
@@ -1747,15 +1890,18 @@ bool smf_sess_have_indirect_data_forwarding(smf_sess_t *sess)
 
         if ((pdr->src_if == OGS_PFCP_INTERFACE_ACCESS) &&
             (far->dst_if == OGS_PFCP_INTERFACE_ACCESS)) {
+            instr_stop_timing("smf_sess_have_indirect_data_forwarding");
             return true;
         }
     }
 
+    instr_stop_timing("smf_sess_have_indirect_data_forwarding");
     return false;
 }
 
 void smf_sess_delete_indirect_data_forwarding(smf_sess_t *sess)
 {
+  instr_start_timing();
     ogs_pfcp_pdr_t *pdr = NULL;
 
     ogs_assert(sess);
@@ -1771,10 +1917,12 @@ void smf_sess_delete_indirect_data_forwarding(smf_sess_t *sess)
             ogs_pfcp_far_remove(far);
         }
     }
+    instr_stop_timing_autofun();
 }
 
 void smf_sess_create_cp_up_data_forwarding(smf_sess_t *sess)
 {
+  instr_start_timing();
     smf_bearer_t *qos_flow = NULL;
 
     ogs_pfcp_pdr_t *cp2up_pdr = NULL;
@@ -1842,10 +1990,12 @@ void smf_sess_create_cp_up_data_forwarding(smf_sess_t *sess)
     ogs_pfcp_pdr_associate_far(up2cp_pdr, up2cp_far);
 
     up2cp_far->apply_action = OGS_PFCP_APPLY_ACTION_FORW;
+    instr_stop_timing_autofun();
 }
 
 void smf_sess_delete_cp_up_data_forwarding(smf_sess_t *sess)
 {
+  instr_start_timing();
     ogs_assert(sess);
 
     if (sess->cp2up_pdr)
@@ -1857,24 +2007,29 @@ void smf_sess_delete_cp_up_data_forwarding(smf_sess_t *sess)
      * Should not remove CP2UP-FAR here */
     if (sess->up2cp_far)
         ogs_pfcp_far_remove(sess->up2cp_far);
+    instr_stop_timing_autofun();
 }
 
 smf_bearer_t *smf_qos_flow_find_by_qfi(smf_sess_t *sess, uint8_t qfi)
 {
+  instr_start_timing();
     smf_bearer_t *qos_flow = NULL;
 
     ogs_assert(sess);
     ogs_list_for_each(&sess->bearer_list, qos_flow) {
-        if (qos_flow->qfi == qfi)
-            return qos_flow;
+        if (qos_flow->qfi == qfi) {
+          instr_stop_timing_autofun();
+          return qos_flow;
+        }
     }
-
+  instr_stop_timing_autofun();
     return qos_flow;
 }
 
 smf_bearer_t *smf_qos_flow_find_by_pcc_rule_id(
         smf_sess_t *sess, char *pcc_rule_id)
 {
+  instr_start_timing();
     smf_bearer_t *qos_flow = NULL;
 
     ogs_assert(sess);
@@ -1882,15 +2037,19 @@ smf_bearer_t *smf_qos_flow_find_by_pcc_rule_id(
 
     ogs_list_for_each(&sess->bearer_list, qos_flow) {
         if (qos_flow->pcc_rule.id &&
-            strcmp(qos_flow->pcc_rule.id, pcc_rule_id) == 0)
-            return qos_flow;
+            strcmp(qos_flow->pcc_rule.id, pcc_rule_id) == 0) {
+          instr_stop_timing_autofun();
+          return qos_flow;
+        }
     }
 
+  instr_stop_timing_autofun();
     return NULL;
 }
 
 smf_bearer_t *smf_bearer_add(smf_sess_t *sess)
 {
+  instr_start_timing();
     smf_bearer_t *bearer = NULL;
 
     ogs_pfcp_pdr_t *dl_pdr = NULL;
@@ -1969,11 +2128,13 @@ smf_bearer_t *smf_bearer_add(smf_sess_t *sess)
 
     ogs_list_add(&sess->bearer_list, bearer);
 
+    instr_stop_timing_autofun();
     return bearer;
 }
 
 int smf_bearer_remove(smf_bearer_t *bearer)
 {
+    instr_start_timing();
     ogs_assert(bearer);
     ogs_assert(bearer->sess);
 
@@ -2008,6 +2169,7 @@ int smf_bearer_remove(smf_bearer_t *bearer)
 
     ogs_pool_free(&smf_bearer_pool, bearer);
 
+    instr_stop_timing_autofun();
     return OGS_OK;
 }
 
@@ -2023,35 +2185,44 @@ void smf_bearer_remove_all(smf_sess_t *sess)
 smf_bearer_t *smf_bearer_find_by_pgw_s5u_teid(
         smf_sess_t *sess, uint32_t pgw_s5u_teid)
 {
+    instr_start_timing();
     smf_bearer_t *bearer = NULL;
 
     ogs_assert(sess);
 
     ogs_list_for_each(&sess->bearer_list, bearer) {
-        if (bearer->pgw_s5u_teid == pgw_s5u_teid)
-            return bearer;
+        if (bearer->pgw_s5u_teid == pgw_s5u_teid) {
+          instr_stop_timing_autofun();
+          return bearer;
+        }
     }
 
+    instr_stop_timing_autofun();
     return NULL;
 }
 
 smf_bearer_t *smf_bearer_find_by_ebi(smf_sess_t *sess, uint8_t ebi)
 {
+    instr_start_timing();
     smf_bearer_t *bearer = NULL;
     
     ogs_assert(sess);
 
     ogs_list_for_each(&sess->bearer_list, bearer) {
-        if (bearer->ebi == ebi)
-            return bearer;
-    }
+        if (bearer->ebi == ebi){
+          instr_stop_timing_autofun();
+          return bearer;
+        }
+      }
 
-    return NULL;
+      instr_stop_timing_autofun();
+      return NULL;
 }
 
 smf_bearer_t *smf_bearer_find_by_pcc_rule_name(
         smf_sess_t *sess, char *pcc_rule_name)
 {
+    instr_start_timing();
     smf_bearer_t *bearer = NULL;
     
     ogs_assert(sess);
@@ -2059,16 +2230,20 @@ smf_bearer_t *smf_bearer_find_by_pcc_rule_name(
 
     ogs_list_for_each(&sess->bearer_list, bearer) {
         if (bearer->pcc_rule.name &&
-            strcmp(bearer->pcc_rule.name, pcc_rule_name) == 0)
-            return bearer;
-    }
+            strcmp(bearer->pcc_rule.name, pcc_rule_name) == 0){
+          instr_stop_timing_autofun();
+          return bearer;
+        }
+      }
 
-    return NULL;
+      instr_stop_timing_autofun();
+      return NULL;
 }
 
 smf_bearer_t *smf_bearer_find_by_pdr_id(
         smf_sess_t *sess, ogs_pfcp_pdr_id_t pdr_id)
 {
+  instr_start_timing();
     smf_bearer_t *bearer = NULL;
 
     ogs_assert(sess);
@@ -2082,41 +2257,60 @@ smf_bearer_t *smf_bearer_find_by_pdr_id(
         ul_pdr = bearer->ul_pdr;
         ogs_assert(ul_pdr);
 
-        if (dl_pdr->id == pdr_id || ul_pdr->id == pdr_id)
-            return bearer;
+        if (dl_pdr->id == pdr_id || ul_pdr->id == pdr_id) {
+          instr_stop_timing_autofun();
+          return bearer;
+        }
     }
 
+    instr_stop_timing_autofun();
     return NULL;
 }
 
 smf_bearer_t *smf_default_bearer_in_sess(smf_sess_t *sess)
 {
+    instr_start_timing();
     ogs_assert(sess);
-    return ogs_list_first(&sess->bearer_list);
+    smf_bearer_t *ret_value = ogs_list_first(&sess->bearer_list);
+    instr_stop_timing_autofun();
+    return ret_value;
 }
 
 smf_ue_t *smf_ue_cycle(smf_ue_t *smf_ue)
 {
-    return ogs_pool_cycle(&smf_ue_pool, smf_ue);
+  instr_start_timing();
+  smf_ue_t *ret_value = ogs_pool_cycle(&smf_ue_pool, smf_ue);
+  instr_stop_timing_autofun();
+  return ret_value;
 }
 
 smf_sess_t *smf_sess_cycle(smf_sess_t *sess)
 {
-    return ogs_pool_cycle(&smf_sess_pool, sess);
+  instr_start_timing();
+  smf_sess_t *ret_value = ogs_pool_cycle(&smf_sess_pool, sess);
+  instr_stop_timing_autofun();
+  return ret_value;
 }
 
 smf_bearer_t *smf_bearer_cycle(smf_bearer_t *bearer)
 {
-    return ogs_pool_cycle(&smf_bearer_pool, bearer);
+  instr_start_timing();
+  smf_bearer_t *ret_value =ogs_pool_cycle(&smf_bearer_pool, bearer);
+  instr_stop_timing_autofun();
+  return ret_value;
 }
 
 smf_bearer_t *smf_qos_flow_cycle(smf_bearer_t *qos_flow)
 {
-    return ogs_pool_cycle(&smf_bearer_pool, qos_flow);
+  instr_start_timing();
+  smf_bearer_t *ret_value = ogs_pool_cycle(&smf_bearer_pool, qos_flow);
+  instr_stop_timing_autofun();
+  return ret_value;
 }
 
 void smf_sess_select_nf(smf_sess_t *sess, OpenAPI_nf_type_e nf_type)
 {
+    instr_start_timing();
     ogs_assert(sess);
     ogs_assert(nf_type);
 
@@ -2124,10 +2318,12 @@ void smf_sess_select_nf(smf_sess_t *sess, OpenAPI_nf_type_e nf_type)
         ogs_sbi_select_nrf(&sess->sbi, smf_nf_state_registered);
     else
         ogs_sbi_select_first_nf(&sess->sbi, nf_type, smf_nf_state_registered);
+    instr_stop_timing_autofun();
 }
 
 smf_pf_t *smf_pf_add(smf_bearer_t *bearer)
 {
+  instr_start_timing();
     smf_sess_t *sess = NULL;
     smf_pf_t *pf = NULL;
 
@@ -2156,11 +2352,13 @@ smf_pf_t *smf_pf_add(smf_bearer_t *bearer)
 
     ogs_list_add(&bearer->pf_list, pf);
 
+    instr_stop_timing_autofun();
     return pf;
 }
 
 int smf_pf_remove(smf_pf_t *pf)
 {
+  instr_start_timing();
     ogs_assert(pf);
     ogs_assert(pf->bearer);
     ogs_assert(pf->bearer->sess);
@@ -2177,6 +2375,7 @@ int smf_pf_remove(smf_pf_t *pf)
 
     ogs_pool_free(&smf_pf_pool, pf);
 
+    instr_stop_timing_autofun();
     return OGS_OK;
 }
 
@@ -2191,42 +2390,57 @@ void smf_pf_remove_all(smf_bearer_t *bearer)
 
 smf_pf_t *smf_pf_find_by_id(smf_bearer_t *bearer, uint8_t id)
 {
+  instr_start_timing();
     smf_pf_t *pf = NULL;
     
     ogs_list_for_each(&bearer->pf_list, pf) {
-        if (pf->identifier == id) return pf;
+        if (pf->identifier == id) {
+          instr_stop_timing_autofun();
+        return pf;
+      }
     }
 
+    instr_stop_timing_autofun();
     return NULL;
 }
 
 smf_pf_t *smf_pf_find_by_flow(
     smf_bearer_t *bearer, uint8_t direction, char *flow_description)
 {
+    instr_start_timing();
     smf_pf_t *pf = NULL;
 
     ogs_list_for_each(&bearer->pf_list, pf) {
         if ((pf->direction == direction) &&
             (!strcmp(pf->flow_description, flow_description))) {
+          instr_stop_timing_autofun();
             return pf;
         }
     }
 
+    instr_stop_timing_autofun();
     return NULL;
 }
 
 smf_pf_t *smf_pf_first(smf_bearer_t *bearer)
 {
-    return ogs_list_first(&bearer->pf_list);
+  instr_start_timing();
+  smf_pf_t *ret_value = ogs_list_first(&bearer->pf_list);
+  instr_stop_timing_autofun();
+    return ret_value;
 }
 
 smf_pf_t *smf_pf_next(smf_pf_t *pf)
 {
-    return ogs_list_next(pf);
+  instr_start_timing();
+  smf_pf_t *ret_value = ogs_list_next(pf);
+  instr_stop_timing_autofun();
+  return ret_value;
 }
 
 int smf_pco_build(uint8_t *pco_buf, uint8_t *buffer, int length)
 {
+  instr_start_timing();
     int rv;
     ogs_pco_t ue, smf;
     ogs_pco_ipcp_t pco_ipcp;
@@ -2398,11 +2612,13 @@ int smf_pco_build(uint8_t *pco_buf, uint8_t *buffer, int length)
     }
 
     size = ogs_pco_build(pco_buf, OGS_MAX_PCO_LEN, &smf);
+    instr_stop_timing_autofun();
     return size;
 }
 
 void smf_qfi_pool_init(smf_sess_t *sess)
 {
+  instr_start_timing();
     int i;
 
     ogs_assert(sess);
@@ -2412,17 +2628,21 @@ void smf_qfi_pool_init(smf_sess_t *sess)
     for (i = 1; i <= OGS_MAX_QOS_FLOW_ID; i++) {
         sess->qfi_pool.array[i-1] = i;
     }
+    instr_stop_timing_autofun();
 }
 
 void smf_qfi_pool_final(smf_sess_t *sess)
 {
+  instr_start_timing();
     ogs_assert(sess);
 
     ogs_index_final(&sess->qfi_pool);
+    instr_stop_timing_autofun();
 }
 
 void smf_pf_identifier_pool_init(smf_bearer_t *bearer)
 {
+  instr_start_timing();
     int i;
 
     ogs_assert(bearer);
@@ -2432,17 +2652,21 @@ void smf_pf_identifier_pool_init(smf_bearer_t *bearer)
     for (i = 1; i <= OGS_MAX_NUM_OF_PF; i++) {
         bearer->pf_identifier_pool.array[i-1] = i;
     }
+    instr_stop_timing_autofun();
 }
 
 void smf_pf_identifier_pool_final(smf_bearer_t *bearer)
 {
+  instr_start_timing();
     ogs_assert(bearer);
 
     ogs_index_final(&bearer->pf_identifier_pool);
+    instr_stop_timing_autofun();
 }
 
 void smf_pf_precedence_pool_init(smf_sess_t *sess)
 {
+  instr_start_timing();
     int i;
 
     ogs_assert(sess);
@@ -2453,23 +2677,30 @@ void smf_pf_precedence_pool_init(smf_sess_t *sess)
     for (i = 1; i <= OGS_MAX_NUM_OF_BEARER * OGS_MAX_NUM_OF_PF; i++) {
         sess->pf_precedence_pool.array[i-1] = i;
     }
+    instr_stop_timing_autofun();
 }
 
 void smf_pf_precedence_pool_final(smf_sess_t *sess)
 {
+  instr_start_timing();
     ogs_assert(sess);
 
     ogs_index_final(&sess->pf_precedence_pool);
+    instr_stop_timing_autofun();
 }
 
 static void stats_add_smf_session(void)
 {
+  instr_start_timing();
     num_of_smf_sess = num_of_smf_sess + 1;
     ogs_info("[Added] Number of SMF-Sessions is now %d", num_of_smf_sess);
+    instr_stop_timing_autofun();
 }
 
 static void stats_remove_smf_session(void)
 {
+  instr_start_timing();
     num_of_smf_sess = num_of_smf_sess - 1;
     ogs_info("[Removed] Number of SMF-Sessions is now %d", num_of_smf_sess);
+    instr_stop_timing_autofun();
 }

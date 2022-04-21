@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "binding.h"
 #include "s5c-build.h"
 #include "pfcp-path.h"
@@ -26,6 +27,7 @@
 
 static void bearer_timeout(ogs_gtp_xact_t *xact, void *data)
 {
+    instr_start_timing();
     smf_bearer_t *bearer = data;
     smf_sess_t *sess = NULL;
     smf_ue_t *smf_ue = NULL;
@@ -34,8 +36,11 @@ static void bearer_timeout(ogs_gtp_xact_t *xact, void *data)
     ogs_assert(bearer);
     sess = bearer->sess;
     ogs_assert(sess);
+    instr_state_logging_child("smf_bearer_t", "sess", INSTR_MEM_ACTION_READ, "");
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
+    instr_state_logging_child("smf_sess_t", "smf_ue", INSTR_MEM_ACTION_READ, "");
 
     type = xact->seq[0].type;
 
@@ -58,6 +63,7 @@ static void bearer_timeout(ogs_gtp_xact_t *xact, void *data)
                 smf_ue->imsi_bcd, type);
         break;
     }
+    instr_stop_timing_autofun();
 }
 
 /*
@@ -74,6 +80,7 @@ static void bearer_timeout(ogs_gtp_xact_t *xact, void *data)
 static void encode_traffic_flow_template(
         ogs_gtp_tft_t *tft, smf_bearer_t *bearer, uint8_t tft_operation_code)
 {
+    instr_start_timing();
     int i;
     smf_pf_t *pf = NULL;
 
@@ -105,10 +112,12 @@ static void encode_traffic_flow_template(
         }
     }
     tft->num_of_packet_filter = i;
+    instr_stop_timing("encode_traffic_flow_template");
 }
 
 void smf_bearer_binding(smf_sess_t *sess)
 {
+    instr_start_timing();
     int rv;
     int i, j;
 
@@ -382,10 +391,12 @@ void smf_bearer_binding(smf_sess_t *sess)
             ogs_error("Invalid Type[%d]", pcc_rule->type);
         }
     }
+    instr_stop_timing("smf_bearer_binding");
 }
 
 int smf_gtp_send_create_bearer_request(smf_bearer_t *bearer)
 {
+    instr_start_timing();
     int rv;
 
     smf_sess_t *sess = NULL;
@@ -398,6 +409,7 @@ int smf_gtp_send_create_bearer_request(smf_bearer_t *bearer)
     ogs_assert(bearer);
     sess = bearer->sess;
     ogs_assert(sess);
+    instr_state_logging_child("smf_bearer_t", "sess", INSTR_MEM_ACTION_READ, "");
 
     h.type = OGS_GTP_CREATE_BEARER_REQUEST_TYPE;
     h.teid = sess->sgw_s5c_teid;
@@ -415,11 +427,13 @@ int smf_gtp_send_create_bearer_request(smf_bearer_t *bearer)
     rv = ogs_gtp_xact_commit(xact);
     ogs_expect(rv == OGS_OK);
 
+    instr_stop_timing("smf_gtp_send_create_bearer_request");
     return rv;
 }
 
 void smf_qos_flow_binding(smf_sess_t *sess, ogs_sbi_stream_t *stream)
 {
+    instr_start_timing();
     int rv;
     int i, j;
 
@@ -687,4 +701,5 @@ void smf_qos_flow_binding(smf_sess_t *sess, ogs_sbi_stream_t *stream)
             ogs_assert_if_reached();
         }
     }
+    instr_stop_timing("smf_qos_flow_binding");
 }

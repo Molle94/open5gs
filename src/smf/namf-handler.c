@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "sbi-path.h"
 #include "ngap-path.h"
 #include "binding.h"
@@ -30,6 +31,7 @@ bool smf_namf_comm_handler_n1_n2_message_transfer(
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
     ogs_assert(state);
     ogs_assert(recvmsg);

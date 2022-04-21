@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "npcf-build.h"
 
 ogs_sbi_request_t *smf_npcf_smpolicycontrol_build_create(
@@ -38,6 +39,7 @@ ogs_sbi_request_t *smf_npcf_smpolicycontrol_build_create(
     ogs_assert(sess);
     ogs_assert(sess->sm_context_ref);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     memset(&message, 0, sizeof(message));
@@ -178,6 +180,7 @@ ogs_sbi_request_t *smf_npcf_smpolicycontrol_build_delete(
     ogs_assert(sess);
     ogs_assert(sess->sm_context_ref);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
     ogs_assert(sess->policy_association_id);
 

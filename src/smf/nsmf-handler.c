@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "sbi-path.h"
 #include "nas-path.h"
 #include "ngap-path.h"
@@ -44,6 +45,7 @@ bool smf_nsmf_handle_create_sm_context(
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     SmContextCreateData = message->SmContextCreateData;
@@ -230,6 +232,7 @@ bool smf_nsmf_handle_update_sm_context(
 
     ogs_assert(sess);
     smf_ue = sess->smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
 
     SmContextUpdateData = message->SmContextUpdateData;

@@ -32,13 +32,14 @@ static int context_initialized = 0;
 
 void ausf_context_init(void)
 {
+    ogs_assert(context_initialized == 0);
+
+    ogs_log_install_domain(&__ausf_log_domain, "ausf", ogs_core()->log.level);
     instr_start_timing();
     ogs_assert(context_initialized == 0);
 
     /* Initialize AUSF context */
     memset(&self, 0, sizeof(ausf_context_t));
-
-    ogs_log_install_domain(&__ausf_log_domain, "ausf", ogs_core()->log.level);
     instr_state_logging("ausf_context_t", INSTR_MEM_ACTION_CLEAR, "");
 //    ogs_info("[state] new context");
 
