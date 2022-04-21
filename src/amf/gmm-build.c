@@ -129,8 +129,8 @@ ogs_pkbuf_t *gmm_build_registration_accept(amf_ue_t *amf_ue)
     /* Set T3512 */
     registration_accept->presencemask |= OGS_NAS_5GS_REGISTRATION_ACCEPT_T3512_VALUE_PRESENT;
     t3512_value->length = 1;
-    t3512_value->unit = OGS_NAS_GRPS_TIMER_3_UNIT_MULTIPLES_OF_1_HH;
-    t3512_value->value = 9;
+    t3512_value->unit = OGS_NAS_GRPS_TIMER_3_UNIT_DEACTIVATED;
+    t3512_value->value = 0;
 
 #if 0
     /* Set T3502 */
