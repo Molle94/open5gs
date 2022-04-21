@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+message StoreKeyValue {
+  repeated string key = 1;
+  bytes data = 2;
+}
+
+message GetValue {
+  string key = 1;
+}
+
+message GetValueResponse {
+  bytes data = 1;
+}
+
+message DatastoreRequest {
+  oneof request {
+      StoreKeyValue storeKeyValue = 1;
+      GetValue getValue = 2;
+  }
+}
+
+message DatastoreResponse {
+  enum ResponseStatus {
+    SUCCESS = 0;
+  }
+  ResponseStatus status = 1;
+  oneof response {
+    GetValueResponse getValueResponse = 2;
+  }
+}

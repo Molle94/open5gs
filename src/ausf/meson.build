@@ -40,14 +40,16 @@ libausf = static_library('ausf',
     sources : libausf_sources,
     dependencies : [libapp_dep,
                     libcrypt_dep,
-                    libsbi_dep],
+                    libsbi_dep,
+                    libstatemanagement_dep],
     install : false)
 
 libausf_dep = declare_dependency(
     link_with : libausf,
     dependencies : [libapp_dep,
                     libcrypt_dep,
-                    libsbi_dep])
+                    libsbi_dep,
+                    libstatemanagement_dep])
 
 ausf_sources = files('''
     app.c

@@ -22,6 +22,8 @@
 #include <unistd.h>
 #include "sbi-path.h"
 
+#include "statemanagement.h"
+
 static ausf_context_t self;
 
 int __ausf_log_domain;
@@ -36,7 +38,8 @@ void ausf_context_init(void)
 
     ogs_log_install_domain(&__ausf_log_domain, "ausf", ogs_core()->log.level);
     instr_start_timing();
-    ogs_assert(context_initialized == 0);
+
+    init_statemanagement();
 
     /* Initialize AUSF context */
     memset(&self, 0, sizeof(ausf_context_t));
@@ -80,6 +83,7 @@ void ausf_context_final(void)
     ogs_pool_final(&ausf_ue_pool);
     instr_state_logging("ausf_ue_pool", INSTR_MEM_ACTION_FREE, "");
 
+    finalize_statemanagement();
     context_initialized = 0;
     instr_stop_timing("ausf_context_final");
 }
@@ -146,6 +150,8 @@ ausf_ue_t *ausf_ue_add(char *suci)
     ausf_event_t e;
     ausf_ue_t *ausf_ue = NULL;
 
+    StoreKeyValue *store_kv = create_store_keyvalue();
+
     ogs_assert(suci);
 
     ogs_pool_alloc(&ausf_ue_pool, &ausf_ue);
@@ -163,6 +169,7 @@ ausf_ue_t *ausf_ue_add(char *suci)
 //    ogs_info("[state] ue set ctx_id");
 
     ausf_ue->suci = ogs_strdup(suci);
+    add_store_key(store_kv, suci);
     ogs_assert(ausf_ue->suci);
     instr_state_logging_child("ausf_ue_t", "suci", INSTR_MEM_ACTION_INIT, "");
 //    ogs_info("[state] ue set suci");
@@ -171,6 +178,7 @@ ausf_ue_t *ausf_ue_add(char *suci)
 //    ogs_info("[state] context set suci_hash");
 
     ausf_ue->supi = ogs_supi_from_suci(ausf_ue->suci);
+    add_store_key(store_kv, ausf_ue->supi);
     ogs_assert(ausf_ue->supi);
     instr_state_logging_child("ausf_ue_t", "supi", INSTR_MEM_ACTION_INIT, "");
 //    ogs_info("[state] ue set supi");
@@ -189,6 +197,9 @@ ausf_ue_t *ausf_ue_add(char *suci)
     instr_state_logging_child("ausf_context_t", "ausf_ue_list", INSTR_MEM_ACTION_WRITE, "add ue to list");
 
 //    ogs_info("[state] ue list add ue");
+    set_store_data(store_kv, (uint8_t *)ausf_ue, sizeof(ausf_ue_t)/sizeof(uint8_t));
+    save_store_data(store_kv);
+    destroy_store_keyvalue(store_kv);
 
     instr_stop_timing("ausf_ue_add");
 
@@ -274,6 +285,20 @@ ausf_ue_t *ausf_ue_find_by_suci(char *suci)
     ausf_ue_t *ausf_ue = (ausf_ue_t *)ogs_hash_get(self.suci_hash, suci, strlen(suci));
     instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_READ, "");
     instr_state_logging("ausf_ue_t", INSTR_MEM_ACTION_READ, "");
+
+    uint8_t *data_out = NULL;
+    size_t data_size;
+
+    get_store_data(suci, &data_out, &data_size);
+
+    if(data_size == sizeof(ausf_ue_t)) {
+      ogs_info("store size matches expected object");
+      if(memcmp(ausf_ue, data_out, data_size) == 0) {
+        ogs_info("store data matches expected object");
+      }
+//      memcpy(ausf_ue, data_out, data_size);
+    }
+    free(data_out);
 
     instr_stop_timing("ausf_ue_find_by_suci");
     return ausf_ue;
