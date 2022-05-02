@@ -2213,9 +2213,10 @@ static bool check_smf_info(amf_sess_t *sess, ogs_list_t *nf_info_list)
         ogs_assert(smf_info);
 
         if (check_smf_info_s_nssai(sess, smf_info) == true &&
-            check_smf_info_nr_tai(sess, smf_info) == true)
+            check_smf_info_nr_tai(sess, smf_info) == true) {
           instr_stop_timing_autofun();
-            return true;
+          return true;
+        }
     }
 
     instr_stop_timing_autofun();
