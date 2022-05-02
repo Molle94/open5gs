@@ -74,6 +74,7 @@ static int smf_s6b_fb_cb(struct msg **msg, struct avp *avp,
 
 void smf_s6b_send_aar(smf_sess_t *sess, ogs_gtp_xact_t *xact)
 {
+    instr_start_timing();
     int ret;
 
     struct msg *req = NULL;
@@ -217,6 +218,7 @@ void smf_s6b_send_aar(smf_sess_t *sess, ogs_gtp_xact_t *xact)
                     smf_ue->imsi_bcd,
                     ogs_plmn_id_mnc(&sess->plmn_id),
                     ogs_plmn_id_mcc(&sess->plmn_id));
+    instr_state_logging_child_v2(smf_ue_t, imsi_bcd, INSTR_MEM_ACTION_READ, "");
     ogs_assert(user_name);
 
     ret = fd_msg_avp_new(ogs_diam_user_name, 0, &avp);
@@ -322,6 +324,8 @@ void smf_s6b_send_aar(smf_sess_t *sess, ogs_gtp_xact_t *xact)
 
     ogs_free(user_name);
     ogs_free(visited_network_identifier);
+
+    instr_stop_timing_autofun();
 }
 
 static void smf_s6b_aaa_cb(void *data, struct msg **msg)
@@ -477,6 +481,7 @@ static void smf_s6b_aaa_cb(void *data, struct msg **msg)
 
 void smf_s6b_send_str(smf_sess_t *sess, ogs_gtp_xact_t *xact, uint32_t cause)
 {
+    instr_start_timing();
     int ret;
 
     struct msg *req = NULL;
@@ -571,6 +576,7 @@ void smf_s6b_send_str(smf_sess_t *sess, ogs_gtp_xact_t *xact, uint32_t cause)
                     smf_ue->imsi_bcd,
                     ogs_plmn_id_mnc(&sess->plmn_id),
                     ogs_plmn_id_mcc(&sess->plmn_id));
+    instr_state_logging_child_v2(smf_ue_t, imsi_bcd, INSTR_MEM_ACTION_READ, "");
     ogs_assert(user_name);
 
     ret = fd_msg_avp_new(ogs_diam_user_name, 0, &avp);
@@ -601,6 +607,8 @@ void smf_s6b_send_str(smf_sess_t *sess, ogs_gtp_xact_t *xact, uint32_t cause)
     ogs_assert(pthread_mutex_unlock(&ogs_diam_logger_self()->stats_lock) == 0);
 
     ogs_free(user_name);
+
+    instr_stop_timing_autofun();
 }
 
 static void smf_s6b_sta_cb(void *data, struct msg **msg)

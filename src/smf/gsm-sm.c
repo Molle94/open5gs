@@ -43,6 +43,7 @@ void smf_gsm_state_final(ogs_fsm_t *s, smf_event_t *e)
 
 void smf_gsm_state_operational(ogs_fsm_t *s, smf_event_t *e)
 {
+  instr_start_timing();
     int rv, ngap_state;
     char *strerror = NULL;
     smf_ue_t *smf_ue = NULL;
@@ -438,6 +439,7 @@ void smf_gsm_state_operational(ogs_fsm_t *s, smf_event_t *e)
     default:
         ogs_error("Unknown event [%s]", smf_event_get_name(e));
     }
+    instr_stop_timing_autofun();
 }
 
 void smf_gsm_state_session_will_release(ogs_fsm_t *s, smf_event_t *e)

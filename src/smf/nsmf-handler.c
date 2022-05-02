@@ -27,6 +27,7 @@
 bool smf_nsmf_handle_create_sm_context(
     smf_sess_t *sess, ogs_sbi_stream_t *stream, ogs_sbi_message_t *message)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
 
     ogs_pkbuf_t *n1smbuf = NULL;
@@ -57,6 +58,7 @@ bool smf_nsmf_handle_create_sm_context(
         smf_sbi_send_sm_context_create_error(stream,
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                 "No SmContextCreateData", smf_ue->supi, n1smbuf);
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -68,6 +70,7 @@ bool smf_nsmf_handle_create_sm_context(
         smf_sbi_send_sm_context_create_error(stream,
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                 "No sNssai", smf_ue->supi, n1smbuf);
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -80,6 +83,7 @@ bool smf_nsmf_handle_create_sm_context(
         smf_sbi_send_sm_context_create_error(stream,
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                 "No servingNetwork", smf_ue->supi, n1smbuf);
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -91,6 +95,7 @@ bool smf_nsmf_handle_create_sm_context(
         smf_sbi_send_sm_context_create_error(stream,
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                 "No UeLocation", smf_ue->supi, n1smbuf);
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -105,6 +110,7 @@ bool smf_nsmf_handle_create_sm_context(
         smf_sbi_send_sm_context_create_error(stream,
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                 "No UeLocation", smf_ue->supi, n1smbuf);
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -116,6 +122,7 @@ bool smf_nsmf_handle_create_sm_context(
         smf_sbi_send_sm_context_create_error(stream,
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                 "No n1SmMsg", smf_ue->supi, n1smbuf);
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -128,6 +135,7 @@ bool smf_nsmf_handle_create_sm_context(
         smf_sbi_send_sm_context_create_error(stream,
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                 "No N1 SM Content", smf_ue->supi, n1smbuf);
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -139,6 +147,7 @@ bool smf_nsmf_handle_create_sm_context(
         smf_sbi_send_sm_context_create_error(stream,
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                 "No SmContextStatusNotification", smf_ue->supi, n1smbuf);
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -152,6 +161,7 @@ bool smf_nsmf_handle_create_sm_context(
         smf_sbi_send_sm_context_create_error(stream,
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST, "Invalid URI",
                 SmContextCreateData->sm_context_status_uri, n1smbuf);
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -208,12 +218,15 @@ bool smf_nsmf_handle_create_sm_context(
     ogs_assert(n1smbuf);
     nas_5gs_send_to_gsm(sess, stream, n1smbuf);
 
+    instr_stop_timing_autofun();
+
     return true;
 }
 
 bool smf_nsmf_handle_update_sm_context(
     smf_sess_t *sess, ogs_sbi_stream_t *stream, ogs_sbi_message_t *message)
 {
+    instr_start_timing();
     int i;
     smf_ue_t *smf_ue = NULL;
 
@@ -242,6 +255,8 @@ bool smf_nsmf_handle_update_sm_context(
         smf_sbi_send_sm_context_update_error(stream,
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                 "No SmContextUpdateData", smf_ue->supi, NULL, NULL);
+
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -276,6 +291,8 @@ bool smf_nsmf_handle_update_sm_context(
             smf_sbi_send_sm_context_update_error(stream,
                     OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                     "No n1SmMsg", smf_ue->supi, n1smbuf, NULL);
+
+            instr_stop_timing_autofun();
             return false;
         }
 
@@ -288,6 +305,8 @@ bool smf_nsmf_handle_update_sm_context(
             smf_sbi_send_sm_context_update_error(stream,
                     OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                     "No N1 SM Content", smf_ue->supi, n1smbuf, NULL);
+
+            instr_stop_timing_autofun();
             return false;
         }
 
@@ -313,6 +332,8 @@ bool smf_nsmf_handle_update_sm_context(
             smf_sbi_send_sm_context_update_error(stream,
                     OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                     "No n2SmInfoType", smf_ue->supi, NULL, NULL);
+
+            instr_stop_timing_autofun();
             return false;
         }
 
@@ -323,6 +344,8 @@ bool smf_nsmf_handle_update_sm_context(
             smf_sbi_send_sm_context_update_error(stream,
                     OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                     "No n2SmInfo.content_id", smf_ue->supi, NULL, NULL);
+
+            instr_stop_timing_autofun();
             return false;
         }
 
@@ -332,6 +355,8 @@ bool smf_nsmf_handle_update_sm_context(
             smf_sbi_send_sm_context_update_error(stream,
                     OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                     "No N2 SM Content", smf_ue->supi, NULL, NULL);
+
+            instr_stop_timing_autofun();
             return false;
         }
 
@@ -456,6 +481,8 @@ bool smf_nsmf_handle_update_sm_context(
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST, strerror, NULL, NULL, NULL);
             ogs_free(strerror);
 
+            instr_stop_timing_autofun();
+
             return false;
         }
     } else if (SmContextUpdateData->ho_state) {
@@ -515,6 +542,8 @@ bool smf_nsmf_handle_update_sm_context(
                         strerror, NULL, NULL, NULL);
                 ogs_free(strerror);
 
+                instr_stop_timing_autofun();
+
                 return false;
             }
         } else if (SmContextUpdateData->ho_state ==
@@ -552,6 +581,8 @@ bool smf_nsmf_handle_update_sm_context(
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST, strerror, NULL, NULL, NULL);
             ogs_free(strerror);
 
+            instr_stop_timing_autofun();
+
             return false;
         }
     } else if (SmContextUpdateData->is_release == true &&
@@ -572,9 +603,12 @@ bool smf_nsmf_handle_update_sm_context(
         smf_sbi_send_sm_context_update_error(stream,
                 OGS_SBI_HTTP_STATUS_BAD_REQUEST,
                 "No UpdateData", smf_ue->supi, NULL, NULL);
+
+        instr_stop_timing_autofun();
         return false;
     }
 
+    instr_stop_timing_autofun();
     return true;
 }
 

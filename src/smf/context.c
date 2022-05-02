@@ -1034,6 +1034,7 @@ void smf_sess_select_upf(smf_sess_t *sess)
 
 smf_sess_t *smf_sess_add_by_apn(smf_ue_t *smf_ue, char *apn, uint8_t rat_type)
 {
+    instr_start_timing();
     smf_event_t e;
 
     smf_sess_t *sess = NULL;
@@ -1042,9 +1043,12 @@ smf_sess_t *smf_sess_add_by_apn(smf_ue_t *smf_ue, char *apn, uint8_t rat_type)
     ogs_assert(apn);
 
     ogs_pool_alloc(&smf_sess_pool, &sess);
+    instr_state_logging_v2(smf_sess_pool, INSTR_MEM_ACTION_WRITE, "");
+    instr_state_logging_v2(smf_sess_t, INSTR_MEM_ACTION_WRITE, "");
     if (!sess) {
         ogs_error("Maximum number of session[%lld] reached",
                     (long long)ogs_app()->pool.sess);
+        instr_stop_timing_autofun();
         return NULL;
     }
     memset(sess, 0, sizeof *sess);
@@ -1054,6 +1058,7 @@ smf_sess_t *smf_sess_add_by_apn(smf_ue_t *smf_ue, char *apn, uint8_t rat_type)
     smf_pf_precedence_pool_init(sess);
 
     sess->index = ogs_pool_index(&smf_sess_pool, sess);
+    instr_state_logging_v2(sess, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(sess->index > 0 && sess->index <= ogs_app()->pool.sess);
 
     /* Set TEID & SEID */
@@ -1084,16 +1089,21 @@ smf_sess_t *smf_sess_add_by_apn(smf_ue_t *smf_ue, char *apn, uint8_t rat_type)
     ogs_fsm_init(&sess->sm, &e);
 
     sess->smf_ue = smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_WRITE, "");
 
     ogs_list_add(&smf_ue->sess_list, sess);
+    instr_state_logging_child_v2(smf_ue_t, sess_list, INSTR_MEM_ACTION_WRITE, "");
 
     stats_add_smf_session();
+
+    instr_stop_timing_autofun();
 
     return sess;
 }
 
 smf_sess_t *smf_sess_add_by_gtp_message(ogs_gtp_message_t *message)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
     smf_sess_t *sess = NULL;
     char apn[OGS_MAX_APN_LEN];
@@ -1102,14 +1112,17 @@ smf_sess_t *smf_sess_add_by_gtp_message(ogs_gtp_message_t *message)
 
     if (req->imsi.presence == 0) {
         ogs_error("No IMSI");
+        instr_stop_timing_autofun();
         return NULL;
     }
     if (req->access_point_name.presence == 0) {
         ogs_error("No APN");
+        instr_stop_timing_autofun();
         return NULL;
     }
     if (req->rat_type.presence == 0) {
         ogs_error("No RAT Type");
+        instr_stop_timing_autofun();
         return NULL;
     }
 
@@ -1151,11 +1164,13 @@ smf_sess_t *smf_sess_add_by_gtp_message(ogs_gtp_message_t *message)
     }
 
     sess = smf_sess_add_by_apn(smf_ue, apn, req->rat_type.u8);
+    instr_stop_timing_autofun();
     return sess;
 }
 
 smf_sess_t *smf_sess_add_by_psi(smf_ue_t *smf_ue, uint8_t psi)
 {
+    instr_start_timing();
     smf_event_t e;
 
     smf_sess_t *sess = NULL;
@@ -1167,9 +1182,11 @@ smf_sess_t *smf_sess_add_by_psi(smf_ue_t *smf_ue, uint8_t psi)
     if (!sess) {
         ogs_error("Maximum number of session[%lld] reached",
             (long long)ogs_app()->pool.sess);
+        instr_stop_timing_autofun();
         return NULL;
     }
     memset(sess, 0, sizeof *sess);
+    instr_state_logging_v2(sess, INSTR_MEM_ACTION_WRITE, "");
 
     /* SBI Features */
     OGS_SBI_FEATURES_SET(sess->smpolicycontrol_features,
@@ -1216,16 +1233,20 @@ smf_sess_t *smf_sess_add_by_psi(smf_ue_t *smf_ue, uint8_t psi)
     ogs_fsm_init(&sess->sm, &e);
 
     sess->smf_ue = smf_ue;
+    instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_WRITE, "");
 
     ogs_list_add(&smf_ue->sess_list, sess);
+    instr_state_logging_child_v2(smf_ue_t, sess_list, INSTR_MEM_ACTION_WRITE, "");
 
     stats_add_smf_session();
 
+    instr_stop_timing_autofun();
     return sess;
 }
 
 smf_sess_t *smf_sess_add_by_sbi_message(ogs_sbi_message_t *message)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
     smf_sess_t *sess = NULL;
 
@@ -1237,11 +1258,13 @@ smf_sess_t *smf_sess_add_by_sbi_message(ogs_sbi_message_t *message)
 
     if (!SmContextCreateData->supi) {
         ogs_error("No SUPI");
+         instr_stop_timing_autofun();
         return NULL;
     }
 
     if (SmContextCreateData->is_pdu_session_id == false) {
         ogs_error("PDU session identitiy is unassigned");
+        instr_stop_timing_autofun();
         return NULL;
     }
 
@@ -1260,6 +1283,7 @@ smf_sess_t *smf_sess_add_by_sbi_message(ogs_sbi_message_t *message)
 
     sess = smf_sess_add_by_psi(smf_ue, SmContextCreateData->pdu_session_id);
 
+    instr_stop_timing_autofun();
     return sess;
 }
 
@@ -1301,6 +1325,7 @@ void smf_sess_set_ue_ip(smf_sess_t *sess)
             sess->session.session_type = OGS_PDU_SESSION_TYPE_IPV6;
     }
 
+    instr_state_logging_v2(sess, INSTR_MEM_ACTION_WRITE, "");
     sess->session.paa.session_type = sess->session.session_type;
     ogs_assert(sess->session.session_type);
 
@@ -1488,6 +1513,7 @@ void smf_sess_remove(smf_sess_t *sess)
             sess->ipv6 ? OGS_INET6_NTOP(&sess->ipv6->addr, buf2) : "");
 
     ogs_list_remove(&smf_ue->sess_list, sess);
+    instr_state_logging_child_v2(smf_ue_t, sess_list, INSTR_MEM_ACTION_WRITE, "");
 
     memset(&e, 0, sizeof(e));
     e.sess = sess;
@@ -1572,6 +1598,7 @@ void smf_sess_remove(smf_sess_t *sess)
     smf_pf_precedence_pool_final(sess);
 
     ogs_pool_free(&smf_sess_pool, sess);
+    instr_state_logging_child_v2(smf_sess_pool, sess, INSTR_MEM_ACTION_FREE, "");
 
     stats_remove_smf_session();
     instr_stop_timing("smf_sess_remove");
@@ -1614,7 +1641,7 @@ smf_sess_t *smf_sess_find_by_apn(smf_ue_t *smf_ue, char *apn, uint8_t rat_type)
     ogs_assert(smf_ue);
     ogs_assert(apn);
 
-
+    instr_state_logging_child_v2(smf_ue_t, sess_list, INSTR_MEM_ACTION_READ, "");
     ogs_list_for_each(&smf_ue->sess_list, sess) {
         if (ogs_strcasecmp(sess->session.name, apn) == 0 &&
             sess->gtp_rat_type == rat_type) {
@@ -1635,6 +1662,7 @@ smf_sess_t *smf_sess_find_by_psi(smf_ue_t *smf_ue, uint8_t psi)
     ogs_assert(smf_ue);
     ogs_assert(psi != OGS_NAS_PDU_SESSION_IDENTITY_UNASSIGNED);
 
+    instr_state_logging_child_v2(smf_ue_t, sess_list, INSTR_MEM_ACTION_READ, "");
     ogs_list_for_each(&smf_ue->sess_list, sess) {
         if (sess->psi == psi) {
           instr_stop_timing("smf_sess_find_by_psi");
@@ -1719,6 +1747,7 @@ smf_bearer_t *smf_qos_flow_add(smf_sess_t *sess)
     ogs_list_init(&qos_flow->pf_list);
 
     dl_pdr = ogs_pfcp_pdr_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(dl_pdr);
     qos_flow->dl_pdr = dl_pdr;
 
@@ -1730,6 +1759,7 @@ smf_bearer_t *smf_qos_flow_add(smf_sess_t *sess)
     }
 
     ul_pdr = ogs_pfcp_pdr_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(ul_pdr);
     qos_flow->ul_pdr = ul_pdr;
 
@@ -1754,6 +1784,7 @@ smf_bearer_t *smf_qos_flow_add(smf_sess_t *sess)
         ogs_assert_if_reached();
 
     dl_far = ogs_pfcp_far_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(dl_far);
     qos_flow->dl_far = dl_far;
 
@@ -1765,6 +1796,7 @@ smf_bearer_t *smf_qos_flow_add(smf_sess_t *sess)
     ogs_assert(sess->pfcp.bar);
 
     ul_far = ogs_pfcp_far_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(ul_far);
     qos_flow->ul_far = ul_far;
 
@@ -1774,6 +1806,7 @@ smf_bearer_t *smf_qos_flow_add(smf_sess_t *sess)
     ul_far->apply_action = OGS_PFCP_APPLY_ACTION_FORW;
 
     qer = ogs_pfcp_qer_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(qer);
     qos_flow->qer = qer;
 
@@ -1789,6 +1822,7 @@ smf_bearer_t *smf_qos_flow_add(smf_sess_t *sess)
     qos_flow->sess = sess;
 
     ogs_list_add(&sess->bearer_list, qos_flow);
+    instr_state_logging_child_v2(smf_sess_t, bearer_list, INSTR_MEM_ACTION_WRITE, "");
 
     instr_stop_timing("smf_qos_flow_add");
     return qos_flow;
@@ -1809,6 +1843,7 @@ void smf_sess_create_indirect_data_forwarding(smf_sess_t *sess)
         ogs_assert(sess);
 
         pdr = ogs_pfcp_pdr_add(&sess->pfcp);
+        instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
         ogs_assert(pdr);
 
         pdr->src_if = OGS_PFCP_INTERFACE_ACCESS;
@@ -1827,6 +1862,7 @@ void smf_sess_create_indirect_data_forwarding(smf_sess_t *sess)
             ogs_assert_if_reached();
 
         far = ogs_pfcp_far_add(&sess->pfcp);
+        instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
         ogs_assert(far);
 
         far->dst_if = OGS_PFCP_INTERFACE_ACCESS;
@@ -1915,6 +1951,7 @@ void smf_sess_delete_indirect_data_forwarding(smf_sess_t *sess)
             (far->dst_if == OGS_PFCP_INTERFACE_ACCESS)) {
             ogs_pfcp_pdr_remove(pdr);
             ogs_pfcp_far_remove(far);
+            instr_state_logging_v2(smf_sess_t, INSTR_MEM_ACTION_WRITE, "");
         }
     }
     instr_stop_timing_autofun();
@@ -1935,6 +1972,7 @@ void smf_sess_create_cp_up_data_forwarding(smf_sess_t *sess)
     smf_sess_delete_cp_up_data_forwarding(sess);
 
     cp2up_pdr = ogs_pfcp_pdr_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(cp2up_pdr);
     sess->cp2up_pdr = cp2up_pdr;
 
@@ -1954,6 +1992,7 @@ void smf_sess_create_cp_up_data_forwarding(smf_sess_t *sess)
         ogs_assert_if_reached();
 
     up2cp_pdr = ogs_pfcp_pdr_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(up2cp_pdr);
     sess->up2cp_pdr = up2cp_pdr;
 
@@ -1983,6 +2022,7 @@ void smf_sess_create_cp_up_data_forwarding(smf_sess_t *sess)
     sess->cp2up_far = cp2up_far;
 
     up2cp_far = ogs_pfcp_far_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(up2cp_far);
     sess->up2cp_far = up2cp_far;
 
@@ -1998,15 +2038,22 @@ void smf_sess_delete_cp_up_data_forwarding(smf_sess_t *sess)
   instr_start_timing();
     ogs_assert(sess);
 
-    if (sess->cp2up_pdr)
+    if (sess->cp2up_pdr) {
         ogs_pfcp_pdr_remove(sess->cp2up_pdr);
-    if (sess->up2cp_pdr)
+        instr_state_logging_v2(smf_sess_t, INSTR_MEM_ACTION_WRITE, "");
+    }
+    if (sess->up2cp_pdr) {
         ogs_pfcp_pdr_remove(sess->up2cp_pdr);
+        instr_state_logging_v2(smf_sess_t, INSTR_MEM_ACTION_WRITE, "");
+    }
 
     /* CP2UP-FAR == DL-FAR in Default QoS Flow
      * Should not remove CP2UP-FAR here */
-    if (sess->up2cp_far)
+    if (sess->up2cp_far) {
         ogs_pfcp_far_remove(sess->up2cp_far);
+        instr_state_logging_v2(smf_sess_t, INSTR_MEM_ACTION_WRITE, "");
+    }
+
     instr_stop_timing_autofun();
 }
 
@@ -2072,6 +2119,8 @@ smf_bearer_t *smf_bearer_add(smf_sess_t *sess)
     ogs_list_init(&bearer->pf_list);
 
     dl_pdr = ogs_pfcp_pdr_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
+
     ogs_assert(dl_pdr);
     bearer->dl_pdr = dl_pdr;
 
@@ -2082,6 +2131,7 @@ smf_bearer_t *smf_bearer_add(smf_sess_t *sess)
     ogs_assert(dl_pdr->apn);
 
     ul_pdr = ogs_pfcp_pdr_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(ul_pdr);
     bearer->ul_pdr = ul_pdr;
 
@@ -2105,6 +2155,7 @@ smf_bearer_t *smf_bearer_add(smf_sess_t *sess)
         ogs_assert_if_reached();
 
     dl_far = ogs_pfcp_far_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(dl_far);
     bearer->dl_far = dl_far;
 
@@ -2116,6 +2167,7 @@ smf_bearer_t *smf_bearer_add(smf_sess_t *sess)
     ogs_assert(sess->pfcp.bar);
 
     ul_far = ogs_pfcp_far_add(&sess->pfcp);
+    instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
     ogs_assert(ul_far);
     bearer->ul_far = ul_far;
 
@@ -2313,6 +2365,8 @@ void smf_sess_select_nf(smf_sess_t *sess, OpenAPI_nf_type_e nf_type)
     instr_start_timing();
     ogs_assert(sess);
     ogs_assert(nf_type);
+
+    instr_state_logging_child_v2(smf_sess_t, sbi, INSTR_MEM_ACTION_WRITE, "");
 
     if (nf_type == OpenAPI_nf_type_NRF)
         ogs_sbi_select_nrf(&sess->sbi, smf_nf_state_registered);
@@ -2624,6 +2678,7 @@ void smf_qfi_pool_init(smf_sess_t *sess)
     ogs_assert(sess);
 
     ogs_index_init(&sess->qfi_pool, OGS_MAX_QOS_FLOW_ID);
+    instr_state_logging_v2(smf_sess_t, INSTR_MEM_ACTION_WRITE, "");
 
     for (i = 1; i <= OGS_MAX_QOS_FLOW_ID; i++) {
         sess->qfi_pool.array[i-1] = i;
@@ -2635,7 +2690,7 @@ void smf_qfi_pool_final(smf_sess_t *sess)
 {
   instr_start_timing();
     ogs_assert(sess);
-
+    instr_state_logging_v2(smf_sess_t, INSTR_MEM_ACTION_WRITE, "");
     ogs_index_final(&sess->qfi_pool);
     instr_stop_timing_autofun();
 }
@@ -2673,7 +2728,7 @@ void smf_pf_precedence_pool_init(smf_sess_t *sess)
 
     ogs_index_init(&sess->pf_precedence_pool,
             OGS_MAX_NUM_OF_BEARER * OGS_MAX_NUM_OF_PF);
-
+    instr_state_logging_v2(smf_sess_t, INSTR_MEM_ACTION_WRITE, "");
     for (i = 1; i <= OGS_MAX_NUM_OF_BEARER * OGS_MAX_NUM_OF_PF; i++) {
         sess->pf_precedence_pool.array[i-1] = i;
     }
@@ -2684,7 +2739,7 @@ void smf_pf_precedence_pool_final(smf_sess_t *sess)
 {
   instr_start_timing();
     ogs_assert(sess);
-
+    instr_state_logging_v2(smf_sess_t, INSTR_MEM_ACTION_WRITE, "");
     ogs_index_final(&sess->pf_precedence_pool);
     instr_stop_timing_autofun();
 }

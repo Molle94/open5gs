@@ -143,6 +143,7 @@ bool smf_sbi_discover_and_send(OpenAPI_nf_type_e target_nf_type,
         smf_sess_t *sess, ogs_sbi_stream_t *stream, int state, void *data,
         ogs_sbi_request_t *(*build)(smf_sess_t *sess, void *data))
 {
+    instr_start_timing();
     ogs_sbi_xact_t *xact = NULL;
     smf_ue_t *smf_ue = NULL;
 
@@ -165,6 +166,7 @@ bool smf_sbi_discover_and_send(OpenAPI_nf_type_e target_nf_type,
             ogs_sbi_server_send_error(stream,
                 OGS_SBI_HTTP_STATUS_GATEWAY_TIMEOUT, NULL,
                 "Cannot discover", smf_ue->supi));
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -179,8 +181,11 @@ bool smf_sbi_discover_and_send(OpenAPI_nf_type_e target_nf_type,
             ogs_sbi_server_send_error(stream,
                 OGS_SBI_HTTP_STATUS_GATEWAY_TIMEOUT, NULL,
                 "Cannot discover", smf_ue->supi));
+        instr_stop_timing_autofun();
         return false;
     }
+
+    instr_stop_timing_autofun();
 
     return true;
 }
@@ -188,6 +193,7 @@ bool smf_sbi_discover_and_send(OpenAPI_nf_type_e target_nf_type,
 void smf_namf_comm_send_n1_n2_message_transfer(
         smf_sess_t *sess, smf_n1_n2_message_transfer_param_t *param)
 {
+    instr_start_timing();
     ogs_sbi_xact_t *xact = NULL;
     smf_ue_t *smf_ue = NULL;
 
@@ -205,6 +211,7 @@ void smf_namf_comm_send_n1_n2_message_transfer(
             sess, param, smf_timer_sbi_client_wait_expire);
     if (!xact) {
         ogs_error("smf_namf_comm_send_n1_n2_message_transfer() failed");
+        instr_stop_timing_autofun();
         return;
     }
 
@@ -212,6 +219,7 @@ void smf_namf_comm_send_n1_n2_message_transfer(
 
     ogs_sbi_discover_and_send(xact,
             (ogs_fsm_handler_t)smf_nf_state_registered, client_cb);
+    instr_stop_timing_autofun();
 }
 
 void smf_sbi_send_sm_context_create_error(

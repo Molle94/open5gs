@@ -514,6 +514,7 @@ void smf_epc_n4_handle_session_establishment_response(
         smf_sess_t *sess, ogs_pfcp_xact_t *xact,
         ogs_pfcp_session_establishment_response_t *rsp)
 {
+    instr_start_timing();
     uint8_t cause_value = 0;
 
     smf_bearer_t *bearer = NULL;
@@ -609,6 +610,7 @@ void smf_epc_n4_handle_session_establishment_response(
     if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
         ogs_gtp_send_error_message(gtp_xact, sess ? sess->sgw_s5c_teid : 0,
                 OGS_GTP_CREATE_SESSION_RESPONSE_TYPE, cause_value);
+        instr_stop_timing_autofun();
         return;
     }
 
@@ -621,6 +623,7 @@ void smf_epc_n4_handle_session_establishment_response(
         ogs_gtp_send_error_message(gtp_xact, sess ? sess->sgw_s5c_teid : 0,
                 OGS_GTP_CREATE_SESSION_RESPONSE_TYPE,
                 OGS_GTP_CAUSE_GRE_KEY_NOT_FOUND);
+        instr_stop_timing_autofun();
         return;
     }
 
@@ -656,6 +659,8 @@ void smf_epc_n4_handle_session_establishment_response(
     }
 
     smf_bearer_binding(sess);
+
+    instr_stop_timing_autofun();
 }
 
 void smf_epc_n4_handle_session_modification_response(
@@ -821,6 +826,7 @@ void smf_n4_handle_session_report_request(
         smf_sess_t *sess, ogs_pfcp_xact_t *pfcp_xact,
         ogs_pfcp_session_report_request_t *pfcp_req)
 {
+    instr_start_timing();
     smf_bearer_t *qos_flow = NULL;
     ogs_pfcp_pdr_t *pdr = NULL;
 
@@ -847,6 +853,7 @@ void smf_n4_handle_session_report_request(
         ogs_pfcp_send_error_message(pfcp_xact, 0,
                 OGS_PFCP_SESSION_REPORT_RESPONSE_TYPE,
                 cause_value, 0);
+        instr_stop_timing_autofun();
         return;
     }
 
@@ -883,6 +890,7 @@ void smf_n4_handle_session_report_request(
                         ogs_pfcp_send_error_message(pfcp_xact, 0,
                                 OGS_PFCP_SESSION_REPORT_RESPONSE_TYPE,
                                 OGS_GTP_CAUSE_SERVICE_NOT_SUPPORTED, 0);
+                        instr_stop_timing_autofun();
                         return;
                     }
 
@@ -914,6 +922,7 @@ void smf_n4_handle_session_report_request(
             ogs_pfcp_send_error_message(pfcp_xact, 0,
                     OGS_PFCP_SESSION_REPORT_RESPONSE_TYPE,
                     cause_value, 0);
+            instr_stop_timing_autofun();
             return;
         }
 
@@ -948,7 +957,10 @@ void smf_n4_handle_session_report_request(
         error_indication_session = smf_sess_find_by_error_indication_report(
                 smf_ue, &pfcp_req->error_indication_report);
 
-        if (!error_indication_session) return;
+        if (!error_indication_session) {
+          instr_stop_timing_autofun();
+          return;
+        }
 
         ogs_assert(OGS_OK ==
             smf_5gc_pfcp_send_session_modification_request(
@@ -963,4 +975,6 @@ void smf_n4_handle_session_report_request(
             smf_pfcp_send_session_report_response(
                 pfcp_xact, sess, OGS_PFCP_CAUSE_SYSTEM_FAILURE));
     }
+
+    instr_stop_timing_autofun();
 }

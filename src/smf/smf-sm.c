@@ -46,6 +46,7 @@ void smf_state_final(ogs_fsm_t *s, smf_event_t *e)
 
 void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
 {
+//    instr_start_timing();
     int rv;
     const char *api_version = NULL;
 
@@ -126,8 +127,10 @@ void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
             if (gtp_message.h.teid == 0) {
                 ogs_expect(!sess);
                 sess = smf_sess_add_by_gtp_message(&gtp_message);
-                if (sess)
+                if (sess) {
                     OGS_SETUP_GTP_NODE(sess, gnode);
+                    instr_state_logging_child_v2(smf_sess_t, gnode, INSTR_MEM_ACTION_WRITE, "");
+                }
             }
             smf_s5c_handle_create_session_request(
                 sess, gtp_xact, &gtp_message.create_session_request);
@@ -644,6 +647,7 @@ void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
         if (ogs_nas_5gsm_decode(&nas_message, pkbuf) != OGS_OK) {
             ogs_error("ogs_nas_5gsm_decode() failed");
             ogs_pkbuf_free(pkbuf);
+//            instr_stop_timing_autofun();
             return;
         }
 
@@ -687,4 +691,6 @@ void smf_state_operational(ogs_fsm_t *s, smf_event_t *e)
         ogs_error("No handler for event %s", smf_event_get_name(e));
         break;
     }
+
+//    instr_stop_timing_autofun();
 }

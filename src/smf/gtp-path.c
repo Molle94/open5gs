@@ -488,6 +488,7 @@ static void send_router_advertisement(smf_sess_t *sess, uint8_t *ip6_dst)
 
 static void bearer_timeout(ogs_gtp_xact_t *xact, void *data)
 {
+    instr_start_timing();
     smf_bearer_t *bearer = data;
     smf_sess_t *sess = NULL;
     smf_ue_t *smf_ue = NULL;
@@ -519,4 +520,6 @@ static void bearer_timeout(ogs_gtp_xact_t *xact, void *data)
                 smf_ue->imsi_bcd, type);
         break;
     }
+
+    instr_stop_timing_autofun();
 }

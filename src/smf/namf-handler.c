@@ -26,6 +26,7 @@
 bool smf_namf_comm_handler_n1_n2_message_transfer(
         smf_sess_t *sess, int state, ogs_sbi_message_t *recvmsg)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
     OpenAPI_n1_n2_message_transfer_rsp_data_t *N1N2MessageTransferRspData;
 
@@ -156,6 +157,8 @@ bool smf_namf_comm_handler_n1_n2_message_transfer(
         ogs_fatal("Unexpected state [%d]", state);
         ogs_assert_if_reached();
     }
+
+    instr_stop_timing_autofun();
 
     return true;
 }

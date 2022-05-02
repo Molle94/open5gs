@@ -50,6 +50,7 @@ void smf_s5c_handle_create_session_request(
         smf_sess_t *sess, ogs_gtp_xact_t *xact,
         ogs_gtp_create_session_request_t *req)
 {
+    instr_start_timing();
     char buf1[OGS_ADDRSTRLEN];
     char buf2[OGS_ADDRSTRLEN];
 
@@ -156,6 +157,7 @@ void smf_s5c_handle_create_session_request(
     if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
         ogs_gtp_send_error_message(xact, sess ? sess->sgw_s5c_teid : 0,
                 OGS_GTP_CREATE_SESSION_RESPONSE_TYPE, cause_value);
+        instr_stop_timing_autofun();
         return;
     }
 
@@ -172,6 +174,7 @@ void smf_s5c_handle_create_session_request(
         if (eutran_sess) {
             /* Need to check handover is possible */
             int eutran_session_count = 0;
+            instr_state_logging_child_v2(smf_ue_t, sess_list, INSTR_MEM_ACTION_READ, "");
             ogs_list_for_each(&smf_ue->sess_list, eutran_sess) {
                 if (eutran_sess->gtp_rat_type != OGS_GTP_RAT_TYPE_EUTRAN)
                     continue;
@@ -186,6 +189,7 @@ void smf_s5c_handle_create_session_request(
                 ogs_gtp_send_error_message(xact, sess ? sess->sgw_s5c_teid : 0,
                     OGS_GTP_CREATE_SESSION_RESPONSE_TYPE,
                     OGS_GTP_CAUSE_MULTIPLE_ACCESSES_TO_A_PDN_CONNECTION_NOT_ALLOWED);
+                instr_stop_timing_autofun();
                 return;
             }
         }
@@ -208,6 +212,7 @@ void smf_s5c_handle_create_session_request(
         ogs_gtp_send_error_message(xact, sess ? sess->sgw_s5c_teid : 0,
                 OGS_GTP_CREATE_SESSION_RESPONSE_TYPE,
                 OGS_GTP_CAUSE_REMOTE_PEER_NOT_RESPONDING);
+        instr_stop_timing_autofun();
         return;
     }
 
@@ -326,6 +331,8 @@ void smf_s5c_handle_create_session_request(
         ogs_error("Unknown RAT Type [%d]", sess->gtp_rat_type);
         ogs_assert_if_reached();
     }
+
+    instr_stop_timing_autofun();
 }
 
 void smf_s5c_handle_delete_session_request(
@@ -386,6 +393,7 @@ void smf_s5c_handle_modify_bearer_request(
         smf_sess_t *sess, ogs_gtp_xact_t *xact,
         ogs_gtp_modify_bearer_request_t *req)
 {
+    instr_start_timing();
     int rv;
     uint8_t cause_value = 0;
     ogs_gtp_indication_t *indication = NULL;
@@ -411,6 +419,7 @@ void smf_s5c_handle_modify_bearer_request(
     if (cause_value != OGS_GTP_CAUSE_REQUEST_ACCEPTED) {
         ogs_gtp_send_error_message(xact, sess ? sess->sgw_s5c_teid : 0,
                 OGS_GTP_MODIFY_BEARER_RESPONSE_TYPE, cause_value);
+        instr_stop_timing_autofun();
         return;
     }
 
@@ -453,6 +462,8 @@ void smf_s5c_handle_modify_bearer_request(
                 OGS_NAS_PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
                 OGS_GTP_CAUSE_ACCESS_CHANGED_FROM_NON_3GPP_TO_3GPP));
     }
+
+    instr_stop_timing_autofun();
 }
 
 void smf_s5c_handle_create_bearer_response(

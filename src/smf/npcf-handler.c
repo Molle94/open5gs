@@ -28,6 +28,7 @@ bool smf_npcf_smpolicycontrol_handle_create(
         smf_sess_t *sess, ogs_sbi_stream_t *stream, int state,
         ogs_sbi_message_t *recvmsg)
 {
+    instr_start_timing();
     int rv;
     char buf1[OGS_ADDRSTRLEN];
     char buf2[OGS_ADDRSTRLEN];
@@ -508,6 +509,8 @@ bool smf_npcf_smpolicycontrol_handle_create(
     ogs_assert(OGS_OK ==
         smf_5gc_pfcp_send_session_establishment_request(sess, stream));
 
+    instr_stop_timing_autofun();
+
     return true;
 
 cleanup:
@@ -518,6 +521,8 @@ cleanup:
         ogs_sbi_server_send_error(stream, OGS_SBI_HTTP_STATUS_BAD_REQUEST,
             recvmsg, strerror, NULL));
     ogs_free(strerror);
+
+    instr_stop_timing_autofun();
 
     return false;
 }

@@ -26,6 +26,7 @@
 int ngap_handle_pdu_session_resource_setup_response_transfer(
         smf_sess_t *sess, ogs_sbi_stream_t *stream, ogs_pkbuf_t *pkbuf)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
     int rv, i;
 
@@ -154,12 +155,14 @@ int ngap_handle_pdu_session_resource_setup_response_transfer(
 cleanup:
     ogs_asn_free(
             &asn_DEF_NGAP_PDUSessionResourceSetupResponseTransfer, &message);
+    instr_stop_timing_autofun();
     return rv;
 }
 
 int ngap_handle_pdu_session_resource_modify_response_transfer(
         smf_sess_t *sess, ogs_sbi_stream_t *stream, ogs_pkbuf_t *pkbuf)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
     smf_bearer_t *qos_flow = NULL;
     int rv, i;
@@ -238,12 +241,14 @@ int ngap_handle_pdu_session_resource_modify_response_transfer(
 cleanup:
     ogs_asn_free(
             &asn_DEF_NGAP_PDUSessionResourceModifyResponseTransfer, &message);
+    instr_stop_timing_autofun();
     return rv;
 }
 
 int ngap_handle_path_switch_request_transfer(
         smf_sess_t *sess, ogs_sbi_stream_t *stream, ogs_pkbuf_t *pkbuf)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
     int rv, i;
 
@@ -365,12 +370,14 @@ int ngap_handle_path_switch_request_transfer(
 
 cleanup:
     ogs_asn_free(&asn_DEF_NGAP_PathSwitchRequestTransfer, &message);
+    instr_stop_timing_autofun();
     return rv;
 }
 
 int ngap_handle_handover_required_transfer(
         smf_sess_t *sess, ogs_sbi_stream_t *stream, ogs_pkbuf_t *pkbuf)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
     int rv;
 
@@ -417,12 +424,14 @@ int ngap_handle_handover_required_transfer(
 
 cleanup:
     ogs_asn_free(&asn_DEF_NGAP_HandoverRequiredTransfer, &message);
+    instr_stop_timing_autofun();
     return rv;
 }
 
 int ngap_handle_handover_request_ack(
         smf_sess_t *sess, ogs_sbi_stream_t *stream, ogs_pkbuf_t *pkbuf)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
     int rv, i;
 
@@ -587,5 +596,6 @@ int ngap_handle_handover_request_ack(
 
 cleanup:
     ogs_asn_free(&asn_DEF_NGAP_HandoverRequestAcknowledgeTransfer, &message);
+    instr_stop_timing_autofun();
     return rv;
 }

@@ -167,6 +167,7 @@ void smf_pfcp_close(void)
 
 static void sess_5gc_timeout(ogs_pfcp_xact_t *xact, void *data)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
     smf_sess_t *sess = NULL;
     ogs_sbi_stream_t *stream = NULL;
@@ -215,10 +216,13 @@ static void sess_5gc_timeout(ogs_pfcp_xact_t *xact, void *data)
         ogs_error("Not implemented [type:%d]", type);
         break;
     }
+
+    instr_stop_timing_autofun();
 }
 
 static void qos_flow_5gc_timeout(ogs_pfcp_xact_t *xact, void *data)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
     smf_sess_t *sess = NULL;
     smf_bearer_t *qos_flow = NULL;
@@ -255,6 +259,8 @@ static void qos_flow_5gc_timeout(ogs_pfcp_xact_t *xact, void *data)
         ogs_error("Not implemented [type:%d]", type);
         break;
     }
+
+    instr_stop_timing_autofun();
 }
 
 static void sess_epc_timeout(ogs_pfcp_xact_t *xact, void *data)

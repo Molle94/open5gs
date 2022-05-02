@@ -40,7 +40,6 @@ static void bearer_timeout(ogs_gtp_xact_t *xact, void *data)
     smf_ue = sess->smf_ue;
     instr_state_logging_child_v2(sess, smf_ue, INSTR_MEM_ACTION_READ, "");
     ogs_assert(smf_ue);
-    instr_state_logging_child("smf_sess_t", "smf_ue", INSTR_MEM_ACTION_READ, "");
 
     type = xact->seq[0].type;
 
@@ -324,6 +323,7 @@ void smf_bearer_binding(smf_sess_t *sess)
                     qer = bearer->qer;
                     if (!qer) {
                         qer = ogs_pfcp_qer_add(&sess->pfcp);
+                        instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
                         ogs_assert(qer);
                         bearer->qer = qer;
                     }
@@ -616,6 +616,7 @@ void smf_qos_flow_binding(smf_sess_t *sess, ogs_sbi_stream_t *stream)
                     qer = qos_flow->qer;
                     if (!qer) {
                         qer = ogs_pfcp_qer_add(&sess->pfcp);
+                        instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
                         ogs_assert(qer);
                         qos_flow->qer = qer;
                     }

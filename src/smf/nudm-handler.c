@@ -24,6 +24,7 @@
 bool smf_nudm_sdm_handle_get(smf_sess_t *sess, ogs_sbi_stream_t *stream,
         ogs_sbi_message_t *recvmsg)
 {
+    instr_start_timing();
     char *strerror = NULL;
     smf_ue_t *smf_ue = NULL;
     ogs_pkbuf_t *n1smbuf = NULL;
@@ -82,6 +83,7 @@ bool smf_nudm_sdm_handle_get(smf_sess_t *sess, ogs_sbi_stream_t *stream,
                 OGS_SBI_HTTP_STATUS_NOT_FOUND, strerror, NULL, n1smbuf);
         ogs_free(strerror);
 
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -242,6 +244,7 @@ bool smf_nudm_sdm_handle_get(smf_sess_t *sess, ogs_sbi_stream_t *stream,
         strerror = ogs_msprintf("[%s:%d] No dnnConfiguration",
                 smf_ue->supi, sess->psi);
         ogs_assert(strerror);
+        instr_stop_timing_autofun();
         return false;
     }
 
@@ -278,6 +281,7 @@ bool smf_nudm_sdm_handle_get(smf_sess_t *sess, ogs_sbi_stream_t *stream,
         smf_sbi_discover_and_send(OpenAPI_nf_type_PCF, sess, stream,
             0, NULL, smf_npcf_smpolicycontrol_build_create));
 
+    instr_stop_timing_autofun();
     return true;
 
 cleanup:
@@ -289,5 +293,6 @@ cleanup:
             recvmsg, strerror, NULL));
     ogs_free(strerror);
 
+    instr_stop_timing_autofun();
     return false;
 }

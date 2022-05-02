@@ -17,6 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../instrumentation/instrumentation.h"
 #include "context.h"
 #include "gtp-path.h"
 #include "pfcp-path.h"
@@ -75,6 +76,7 @@ void smf_gx_handle_cca_initial_request(
         return;
     }
 
+    instr_state_logging_v2(smf_sess_t, INSTR_MEM_ACTION_WRITE, "");
     sess->num_of_pcc_rule = gx_message->session_data.num_of_pcc_rule;
     for (i = 0; i < gx_message->session_data.num_of_pcc_rule; i++)
         OGS_STORE_PCC_RULE(&sess->pcc_rule[i],
@@ -136,6 +138,7 @@ void smf_gx_handle_cca_initial_request(
         qer = bearer->qer;
         if (!qer) {
             qer = ogs_pfcp_qer_add(&sess->pfcp);
+            instr_state_logging_child_v2(smf_sess_t, pfcp, INSTR_MEM_ACTION_WRITE, "");
             ogs_assert(qer);
             bearer->qer = qer;
         }
@@ -298,6 +301,7 @@ void smf_gx_handle_re_auth_request(
 {
     int i;
 
+    instr_state_logging_v2(smf_sess_t, INSTR_MEM_ACTION_WRITE, "");
     sess->num_of_pcc_rule = gx_message->session_data.num_of_pcc_rule;
     for (i = 0; i < gx_message->session_data.num_of_pcc_rule; i++)
         OGS_STORE_PCC_RULE(&sess->pcc_rule[i],

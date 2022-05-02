@@ -22,6 +22,7 @@
 
 ogs_sbi_request_t *smf_nudm_sdm_build_get(smf_sess_t *sess, void *data)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
     ogs_sbi_message_t message;
     ogs_sbi_request_t *request = NULL;
@@ -37,6 +38,7 @@ ogs_sbi_request_t *smf_nudm_sdm_build_get(smf_sess_t *sess, void *data)
     message.h.service.name = (char *)OGS_SBI_SERVICE_NAME_NUDM_SDM;
     message.h.api.version = (char *)OGS_SBI_API_V2;
     message.h.resource.component[0] = smf_ue->supi;
+    instr_state_logging_child_v2(smf_ue_t, supi, INSTR_MEM_ACTION_READ, "");
     message.h.resource.component[1] = data;
 
     message.param.single_nssai_presence = true;
@@ -49,5 +51,6 @@ ogs_sbi_request_t *smf_nudm_sdm_build_get(smf_sess_t *sess, void *data)
     request = ogs_sbi_build_request(&message);
     ogs_assert(request);
 
+    instr_stop_timing_autofun();
     return request;
 }

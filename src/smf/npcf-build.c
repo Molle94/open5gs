@@ -23,6 +23,7 @@
 ogs_sbi_request_t *smf_npcf_smpolicycontrol_build_create(
         smf_sess_t *sess, void *data)
 {
+    instr_start_timing();
     smf_ue_t *smf_ue = NULL;
 
     ogs_sbi_message_t message;
@@ -52,6 +53,7 @@ ogs_sbi_request_t *smf_npcf_smpolicycontrol_build_create(
 
     ogs_assert(smf_ue->supi);
     SmPolicyContextData.supi = smf_ue->supi;
+    instr_state_logging_child_v2(smf_ue_t, supi, INSTR_MEM_ACTION_READ, "");
     ogs_assert(sess->psi);
     SmPolicyContextData.pdu_session_id = sess->psi;
     ogs_assert(sess->session.session_type);
@@ -158,12 +160,14 @@ ogs_sbi_request_t *smf_npcf_smpolicycontrol_build_create(
     if (SmPolicyContextData.ipv6_address_prefix)
         ogs_free(SmPolicyContextData.ipv6_address_prefix);
 
+    instr_stop_timing_autofun();
     return request;
 }
 
 ogs_sbi_request_t *smf_npcf_smpolicycontrol_build_delete(
         smf_sess_t *sess, void *data)
 {
+    instr_start_timing();
     smf_npcf_smpolicycontrol_param_t *param = data;
 
     smf_ue_t *smf_ue = NULL;
@@ -278,5 +282,6 @@ ogs_sbi_request_t *smf_npcf_smpolicycontrol_build_delete(
     if (SmPolicyDeleteData.serving_network)
         ogs_sbi_free_plmn_id_nid(SmPolicyDeleteData.serving_network);
 
+    instr_stop_timing_autofun();
     return request;
 }

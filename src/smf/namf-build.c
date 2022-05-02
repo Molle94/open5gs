@@ -25,6 +25,7 @@
 ogs_sbi_request_t *smf_namf_comm_build_n1_n2_message_transfer(
         smf_sess_t *sess, smf_n1_n2_message_transfer_param_t *param)
 {
+    instr_start_timing();
     int i;
     smf_ue_t *smf_ue = NULL;
 
@@ -60,6 +61,7 @@ ogs_sbi_request_t *smf_namf_comm_build_n1_n2_message_transfer(
     message.h.api.version = (char *)OGS_SBI_API_V1;
     message.h.resource.component[0] = (char *)OGS_SBI_RESOURCE_NAME_UE_CONTEXTS;
     message.h.resource.component[1] = smf_ue->supi;
+    instr_state_logging_child_v2(smf_ue_t, supi, INSTR_MEM_ACTION_READ, "");
     message.h.resource.component[2] =
         (char *)OGS_SBI_RESOURCE_NAME_N1_N2_MESSAGES;
     message.N1N2MessageTransferReqData = &N1N2MessageTransferReqData;
@@ -156,6 +158,7 @@ ogs_sbi_request_t *smf_namf_comm_build_n1_n2_message_transfer(
     if (N1N2MessageTransferReqData.n1n2_failure_txf_notif_uri)
         ogs_free(N1N2MessageTransferReqData.n1n2_failure_txf_notif_uri);
 
+    instr_stop_timing_autofun();
     return request;
 }
 
