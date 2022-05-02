@@ -3,6 +3,10 @@ all: release
 TARGET_DIR = build
 INSTALL_DIR = `pwd`/install
 
+build:
+	meson -Db_sanitize=address,undefined $(TARGET_DIR) --buildtype=debug --prefix=$(INSTALL_DIR)
+	ninja -C $(TARGET_DIR)
+
 release:
 	# Disable asserts
 	meson $(TARGET_DIR) -Db_ndebug=true --buildtype=release --prefix=$(INSTALL_DIR)

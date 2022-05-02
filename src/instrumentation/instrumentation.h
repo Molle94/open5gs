@@ -22,10 +22,11 @@
 
 /*
  * To use this macro 'instrumentation.h' must be the first included header
- */
-//#define instr_state_logging_f(obj, op, msg, ...) { \
-//      instr_state_logging(obj, op, ogs_msprintf(msg, __VA_ARGS__)); \
-//  }
+ *
+ * #define instr_state_logging_f(obj, op, msg, ...) { \
+ * instr_state_logging(obj, op, ogs_msprintf(msg, __VA_ARGS__)); \
+ * }
+*/
 
 #define instr_state_logging_f(obj, op, msg, ...) { \
     char *msgStr; \
@@ -41,17 +42,15 @@
 
 /*
  * start_timing() and stop_timing() must run in the same block.
+ * microseconds precision
  */
-#define instr_start_timing_fun(fun) long start, end; \
-  struct timeval timecheck; \
-  gettimeofday(&timecheck, NULL); \
-  start = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec / 1000; \
+#define instr_start_timing_fun(fun) ogs_time_t start, end; \
+  start = ogs_time_now(); \
   ogs_info("[timemarker]{%s,start}", fun)
 
 #define instr_start_timing() instr_start_timing_fun(OGS_FUNC)
 
-#define instr_stop_timing_fun(fun) gettimeofday(&timecheck, NULL); \
-  end = (long)timecheck.tv_sec * 1000 + (long)timecheck.tv_usec / 1000; \
+#define instr_stop_timing_fun(fun) end = ogs_time_now(); \
   ogs_info("[timemarker]{%s,stop}", fun); \
   ogs_info("[time]{%s,%ld}", fun, (end - start))
 
