@@ -13,10 +13,21 @@ message GetValueResponse {
   bytes data = 1;
 }
 
+message DeleteKey {
+  string key = 1;
+  bool deleteValue = 2;
+}
+
+message AddKey {
+  repeated string key = 1;
+}
+
 message DatastoreRequest {
   oneof request {
       StoreKeyValue storeKeyValue = 1;
       GetValue getValue = 2;
+      DeleteKey deleteKey = 3;
+      AddKey addKey = 4;
   }
 }
 

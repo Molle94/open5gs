@@ -29,5 +29,7 @@ void save_store_data(StoreKeyValue *);
 void destroy_store_keyvalue(StoreKeyValue *);
 
 void get_store_data(char *, uint8_t **, size_t*);
+void delete_key_from_data_store(char *key);
+void add_key_from_data_store(char *existing_key, char *new_key);
 
 #endif // OPEN5GS_STATEMANAGEMENT_H
