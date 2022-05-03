@@ -40,3 +40,22 @@ message DatastoreResponse {
     GetValueResponse getValueResponse = 2;
   }
 }
+
+message ausf_ue_s_enc {
+  string ctx_id = 1;
+  string suci = 2;
+  string supi = 3;
+  string serving_network_name = 4;
+
+  int32 auth_type = 5;
+  string auth_events_url = 6;
+  int32 auth_result = 7;
+
+  bytes rand  = 8;
+  bytes xres_star  = 9;
+  bytes hxres_star  = 10;
+  bytes kausf = 11;
+  bytes kseaf = 12;
+
+  string fsm_state = 13;
+}

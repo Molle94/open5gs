@@ -163,6 +163,7 @@ void ausf_state_operational(ogs_fsm_t *s, ausf_event_t *e)
                 ogs_error("[%s] State machine exception", ausf_ue->suci);
                 ausf_ue_remove(ausf_ue);
             }
+            update_ausf_ue(ausf_ue);
             break;
 
         DEFAULT
@@ -303,6 +304,7 @@ void ausf_state_operational(ogs_fsm_t *s, ausf_event_t *e)
                 ogs_error("[%s] State machine exception", ausf_ue->suci);
                 ausf_ue_remove(ausf_ue);
             }
+            update_ausf_ue(ausf_ue);
             break;
 
         DEFAULT

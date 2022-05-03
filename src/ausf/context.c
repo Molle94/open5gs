@@ -22,8 +22,6 @@
 #include <unistd.h>
 #include "sbi-path.h"
 
-#include "statemanagement.h"
-
 static ausf_context_t self;
 
 int __ausf_log_domain;
@@ -50,17 +48,17 @@ void ausf_context_init(void)
     instr_state_logging_f("ausf_ue_pool", INSTR_MEM_ACTION_INIT, "pool size: %lu", ogs_app()->max.ue);
 //    ogs_info("[state] new ue pool");
 
-    ogs_list_init(&self.ausf_ue_list);
+//    ogs_list_init(&self.ausf_ue_list);
     instr_state_logging_child("ausf_context_t", "ausf_ue_list", INSTR_MEM_ACTION_INIT, "");
 //    ogs_info("[state] init context ue list");
-    self.suci_hash = ogs_hash_make();
+//    self.suci_hash = ogs_hash_make();
     instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_INIT, "");
 //    ogs_info("[state] context set suci_hash");
-    ogs_assert(self.suci_hash);
-    self.supi_hash = ogs_hash_make();
+//    ogs_assert(self.suci_hash);
+//    self.supi_hash = ogs_hash_make();
     instr_state_logging_child("ausf_context_t", "supi_hash", INSTR_MEM_ACTION_INIT, "");
 //    ogs_info("[state] context set supi_hash");
-    ogs_assert(self.supi_hash);
+//    ogs_assert(self.supi_hash);
 
     context_initialized = 1;
     instr_stop_timing("ausf_context_init");
@@ -73,11 +71,11 @@ void ausf_context_final(void)
 
     ausf_ue_remove_all();
 
-    ogs_assert(self.suci_hash);
-    ogs_hash_destroy(self.suci_hash);
+//    ogs_assert(self.suci_hash);
+//    ogs_hash_destroy(self.suci_hash);
     instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_FREE, "");
-    ogs_assert(self.supi_hash);
-    ogs_hash_destroy(self.supi_hash);
+//    ogs_assert(self.supi_hash);
+//    ogs_hash_destroy(self.supi_hash);
     instr_state_logging_child("ausf_context_t", "supi_hash", INSTR_MEM_ACTION_FREE, "");
 
     ogs_pool_final(&ausf_ue_pool);
@@ -167,13 +165,14 @@ ausf_ue_t *ausf_ue_add(char *suci)
     ogs_assert(ausf_ue->ctx_id);
     instr_state_logging_child("ausf_ue_t", "ctx_id", INSTR_MEM_ACTION_INIT, "");
 //    ogs_info("[state] ue set ctx_id");
+    add_store_key(store_kv, ausf_ue->ctx_id);
 
     ausf_ue->suci = ogs_strdup(suci);
     add_store_key(store_kv, suci);
     ogs_assert(ausf_ue->suci);
     instr_state_logging_child("ausf_ue_t", "suci", INSTR_MEM_ACTION_INIT, "");
 //    ogs_info("[state] ue set suci");
-    ogs_hash_set(self.suci_hash, ausf_ue->suci, strlen(ausf_ue->suci), ausf_ue);
+//    ogs_hash_set(self.suci_hash, ausf_ue->suci, strlen(ausf_ue->suci), ausf_ue);
     instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_NEW, "overwrite or create hash entry");
 //    ogs_info("[state] context set suci_hash");
 
@@ -182,7 +181,7 @@ ausf_ue_t *ausf_ue_add(char *suci)
     ogs_assert(ausf_ue->supi);
     instr_state_logging_child("ausf_ue_t", "supi", INSTR_MEM_ACTION_INIT, "");
 //    ogs_info("[state] ue set supi");
-    ogs_hash_set(self.supi_hash, ausf_ue->supi, strlen(ausf_ue->supi), ausf_ue);
+//    ogs_hash_set(self.supi_hash, ausf_ue->supi, strlen(ausf_ue->supi), ausf_ue);
     instr_state_logging_child("ausf_context_t", "supi_hash", INSTR_MEM_ACTION_NEW, "overwrite or create hash entry");
 //    ogs_info("[state] context set supi_hash");
 
@@ -193,17 +192,114 @@ ausf_ue_t *ausf_ue_add(char *suci)
     ogs_fsm_init(&ausf_ue->sm, &e);
     instr_state_logging_child("ausf_ue_t", "sm", INSTR_MEM_ACTION_WRITE, "fsm init");
 
-    ogs_list_add(&self.ausf_ue_list, ausf_ue);
+//    ogs_list_add(&self.ausf_ue_list, ausf_ue);
     instr_state_logging_child("ausf_context_t", "ausf_ue_list", INSTR_MEM_ACTION_WRITE, "add ue to list");
 
 //    ogs_info("[state] ue list add ue");
-    set_store_data(store_kv, (uint8_t *)ausf_ue, sizeof(ausf_ue_t)/sizeof(uint8_t));
-    save_store_data(store_kv);
+    encode_and_save_ue_data(store_kv, ausf_ue);
     destroy_store_keyvalue(store_kv);
 
     instr_stop_timing("ausf_ue_add");
 
     return ausf_ue;
+}
+
+void update_ausf_ue(ausf_ue_t *ausf_ue) {
+  instr_start_timing();
+  StoreKeyValue *store_kv = create_store_keyvalue();
+
+  // one of the original keys is enough for a data update
+  add_store_key(store_kv, ausf_ue->suci);
+
+  encode_and_save_ue_data(store_kv, ausf_ue);
+  destroy_store_keyvalue(store_kv);
+
+//  ogs_hash_set(self.suci_hash, ausf_ue->suci, strlen(ausf_ue->suci), NULL);
+//  ogs_hash_set(self.supi_hash, ausf_ue->supi, strlen(ausf_ue->supi), NULL);
+
+  ogs_pool_free(&ausf_ue_pool, ausf_ue);
+
+  instr_stop_timing_autofun();
+}
+
+void encode_and_save_ue_data(StoreKeyValue *store_kv, ausf_ue_t* ausf_ue) {
+  AusfUeSEnc request = AUSF_UE_S_ENC__INIT;
+
+  request.ctx_id = ausf_ue->ctx_id;
+  request.suci = ausf_ue->suci;
+  request.supi = ausf_ue->supi;
+  request.serving_network_name = ausf_ue->serving_network_name;
+
+  request.auth_type = ausf_ue->auth_type;
+  request.auth_events_url = ausf_ue->auth_events_url;
+  request.auth_result = ausf_ue->auth_result;
+
+  request.rand.data = ausf_ue->rand;
+  request.rand.len = sizeof(ausf_ue->rand);
+  request.xres_star.data = ausf_ue->xres_star;
+  request.xres_star.len = sizeof(ausf_ue->xres_star);
+  request.hxres_star.data = ausf_ue->hxres_star;
+  request.hxres_star.len = sizeof(ausf_ue->hxres_star);
+  request.kausf.data = ausf_ue->kausf;
+  request.kausf.len = sizeof(ausf_ue->kausf);
+  request.kseaf.data = ausf_ue->kseaf;
+  request.kseaf.len = sizeof(ausf_ue->kseaf);
+
+  if (OGS_FSM_CHECK(&ausf_ue->sm, &ausf_ue_state_operational)) {
+    ogs_info("&ausf_state_operational");
+    request.fsm_state = "ausf_ue_state_operational";
+  } else if (OGS_FSM_CHECK(&ausf_ue->sm, &ausf_ue_state_final)) {
+    ogs_info("&ausf_state_final");
+    request.fsm_state = "ausf_ue_state_final";
+  } else if (OGS_FSM_CHECK(&ausf_ue->sm, &ausf_ue_state_initial)) {
+    ogs_info("&ausf_state_initial");
+    request.fsm_state = "ausf_ue_state_initial";
+  } else {
+    ogs_warn("Can't encode fsm state");
+  }
+  ogs_info("fsm state: %s", request.fsm_state);
+
+  size_t request_size = ausf_ue_s_enc__get_packed_size(&request);
+  uint8_t *data_out = malloc(request_size);
+  ausf_ue_s_enc__pack(&request, data_out);
+
+  set_store_data(store_kv, data_out, request_size);
+  save_store_data(store_kv);
+
+  free(data_out);
+}
+
+void decode_ue_data(uint8_t *store_data, size_t data_size, ausf_ue_t* ausf_ue) {
+  instr_start_timing();
+  AusfUeSEnc *response = ausf_ue_s_enc__unpack(NULL, data_size, store_data);
+
+  ausf_ue->ctx_id = ogs_strdup(response->ctx_id);
+  ausf_ue->suci = ogs_strdup(response->suci);
+  ausf_ue->supi = ogs_strdup(response->supi);
+  ausf_ue->serving_network_name = ogs_strdup(response->serving_network_name);
+
+  ausf_ue->auth_type = response->auth_type;
+  ausf_ue->auth_events_url = ogs_strdup(response->auth_events_url);
+  ausf_ue->auth_result = response->auth_result;
+
+  memcpy(ausf_ue->rand, response->rand.data, response->rand.len);
+  memcpy(ausf_ue->xres_star, response->xres_star.data, response->xres_star.len);
+  memcpy(ausf_ue->hxres_star, response->hxres_star.data, response->hxres_star.len);
+  memcpy(ausf_ue->kausf, response->kausf.data, response->kausf.len);
+  memcpy(ausf_ue->kseaf, response->kseaf.data, response->kseaf.len);
+
+  ogs_fsm_create(&ausf_ue->sm, ausf_ue_state_initial, ausf_ue_state_final);
+  ogs_info("fsm state: %s", response->fsm_state);
+  if(strcmp(response->fsm_state, "ausf_ue_state_operational") == 0) {
+    ogs_info("ausf_state_operational");
+    OGS_FSM_TRAN(&ausf_ue->sm, &ausf_ue_state_operational);
+  } else if(strcmp(response->fsm_state, "ausf_ue_state_final") == 0) {
+    ogs_info("ausf_ue_state_final");
+    OGS_FSM_TRAN(&ausf_ue->sm, &ausf_ue_state_final);
+  }
+
+  ausf_ue_s_enc__free_unpacked(response, NULL);
+  instr_stop_timing_autofun();
 }
 
 void ausf_ue_remove(ausf_ue_t *ausf_ue)
@@ -213,7 +309,7 @@ void ausf_ue_remove(ausf_ue_t *ausf_ue)
 
     ogs_assert(ausf_ue);
 
-    ogs_list_remove(&self.ausf_ue_list, ausf_ue);
+//    ogs_list_remove(&self.ausf_ue_list, ausf_ue);
     instr_state_logging_child("ausf_context_t", "ausf_ue_list", INSTR_MEM_ACTION_WRITE, "remove ue from list");
 //    ogs_info("[state] remove ue from list");
 
@@ -236,7 +332,7 @@ void ausf_ue_remove(ausf_ue_t *ausf_ue)
 //    ogs_info("[state] ue free ctx_id");
 
     ogs_assert(ausf_ue->suci);
-    ogs_hash_set(self.suci_hash, ausf_ue->suci, strlen(ausf_ue->suci), NULL);
+//    ogs_hash_set(self.suci_hash, ausf_ue->suci, strlen(ausf_ue->suci), NULL);
     instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_WRITE, "remove entry from hash");
 //    ogs_info("[state] context set suci_hash");
     ogs_free(ausf_ue->suci);
@@ -244,7 +340,7 @@ void ausf_ue_remove(ausf_ue_t *ausf_ue)
 //    ogs_info("[state] ue free suci");
 
     ogs_assert(ausf_ue->supi);
-    ogs_hash_set(self.supi_hash, ausf_ue->supi, strlen(ausf_ue->supi), NULL);
+//    ogs_hash_set(self.supi_hash, ausf_ue->supi, strlen(ausf_ue->supi), NULL);
     instr_state_logging_child("ausf_context_t", "supi_hash", INSTR_MEM_ACTION_WRITE, "remove entry from hash");
 //    ogs_info("[state] context set supi_hash");
     ogs_free(ausf_ue->supi);
@@ -273,32 +369,66 @@ void ausf_ue_remove_all()
 {
     ausf_ue_t *ausf_ue = NULL, *next = NULL;;
 
-    ogs_list_for_each_safe(&self.ausf_ue_list, next, ausf_ue)
-        ausf_ue_remove(ausf_ue);
+//    ogs_list_for_each_safe(&self.ausf_ue_list, next, ausf_ue)
+//        ausf_ue_remove(ausf_ue);
 
+}
+
+ausf_ue_t *create_ausf_ue_from_data_store(uint8_t *store_data, size_t data_size) {
+  instr_start_timing();
+  ausf_event_t e;
+  ausf_ue_t *ausf_ue = NULL;
+
+  ogs_pool_alloc(&ausf_ue_pool, &ausf_ue);
+  ogs_assert(ausf_ue);
+  memset(ausf_ue, 0, sizeof *ausf_ue);
+
+  decode_ue_data(store_data, data_size, ausf_ue);
+
+//  delete_key_from_data_store(ausf_ue->ctx_id);
+//  ausf_ue->ctx_id =
+//      ogs_msprintf("%d", (int)ogs_pool_index(&ausf_ue_pool, ausf_ue));
+//  ogs_assert(ausf_ue->ctx_id);
+//  add_key_from_data_store(ausf_ue->suci, ausf_ue->ctx_id);
+
+  ogs_assert(ausf_ue->suci);
+//  ogs_hash_set(self.suci_hash, ausf_ue->suci, strlen(ausf_ue->suci), ausf_ue);
+
+  ogs_assert(ausf_ue->supi);
+//  ogs_hash_set(self.supi_hash, ausf_ue->supi, strlen(ausf_ue->supi), ausf_ue);
+
+//  ogs_list_add(&self.ausf_ue_list, ausf_ue);
+  instr_stop_timing_autofun();
+
+  return ausf_ue;
+}
+
+void get_from_data_store(char *key, ausf_ue_t **ausf_ue_p) {
+  uint8_t *data_out = NULL;
+  size_t data_size = 0;
+
+  get_store_data(key, &data_out, &data_size);
+
+  if(data_size > 0) {
+    ogs_info("store size greater 0, we got data");
+    if(!(*ausf_ue_p)) {
+      (*ausf_ue_p) = create_ausf_ue_from_data_store(data_out, data_size);
+    } else {
+      decode_ue_data(data_out, data_size, (*ausf_ue_p));
+    }
+  }
+  free(data_out);
 }
 
 ausf_ue_t *ausf_ue_find_by_suci(char *suci)
 {
     instr_start_timing();
     ogs_assert(suci);
-    ausf_ue_t *ausf_ue = (ausf_ue_t *)ogs_hash_get(self.suci_hash, suci, strlen(suci));
+    ausf_ue_t *ausf_ue = NULL; // = (ausf_ue_t *)ogs_hash_get(self.suci_hash, suci, strlen(suci));
     instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_READ, "");
     instr_state_logging("ausf_ue_t", INSTR_MEM_ACTION_READ, "");
 
-    uint8_t *data_out = NULL;
-    size_t data_size;
-
-    get_store_data(suci, &data_out, &data_size);
-
-    if(data_size == sizeof(ausf_ue_t)) {
-      ogs_info("store size matches expected object");
-      if(memcmp(ausf_ue, data_out, data_size) == 0) {
-        ogs_info("store data matches expected object");
-      }
-//      memcpy(ausf_ue, data_out, data_size);
-    }
-    free(data_out);
+    get_from_data_store(suci, &ausf_ue);
 
     instr_stop_timing("ausf_ue_find_by_suci");
     return ausf_ue;
@@ -308,9 +438,11 @@ ausf_ue_t *ausf_ue_find_by_supi(char *supi)
 {
     instr_start_timing();
     ogs_assert(supi);
-    ausf_ue_t *ausf_ue = (ausf_ue_t *)ogs_hash_get(self.supi_hash, supi, strlen(supi));
+    ausf_ue_t *ausf_ue = NULL; //= (ausf_ue_t *)ogs_hash_get(self.supi_hash, supi, strlen(supi));
     instr_state_logging_child("ausf_context_t", "suci_hash", INSTR_MEM_ACTION_READ, "");
     instr_state_logging("ausf_ue_t", INSTR_MEM_ACTION_READ, "");
+
+    get_from_data_store(supi, &ausf_ue);
 
     instr_stop_timing("ausf_ue_find_by_supi");
     return ausf_ue;
@@ -329,9 +461,11 @@ ausf_ue_t *ausf_ue_find_by_ctx_id(char *ctx_id)
 {
     instr_start_timing();
     ogs_assert(ctx_id);
-    ausf_ue_t *ausf_ue = ogs_pool_find(&ausf_ue_pool, atoll(ctx_id));
+    ausf_ue_t *ausf_ue = NULL; // = ogs_pool_find(&ausf_ue_pool, atoll(ctx_id));
     instr_state_logging("ausf_ue_pool", INSTR_MEM_ACTION_READ, "");
     instr_state_logging("ausf_ue_t", INSTR_MEM_ACTION_READ, "");
+
+    get_from_data_store(ctx_id, &ausf_ue);
 
     instr_stop_timing("ausf_ue_find_by_ctx_id");
     return ausf_ue;
@@ -340,7 +474,8 @@ ausf_ue_t *ausf_ue_find_by_ctx_id(char *ctx_id)
 ausf_ue_t *ausf_ue_cycle(ausf_ue_t *ausf_ue)
 {
     instr_start_timing();
-    ausf_ue_t *ausf_ue_ret = ogs_pool_cycle(&ausf_ue_pool, ausf_ue);
+    ausf_ue_t *ausf_ue_ret = ausf_ue_find_by_suci(ausf_ue->suci);
+//    ausf_ue_t *ausf_ue_ret = ogs_pool_cycle(&ausf_ue_pool, ausf_ue);
 
     instr_stop_timing("ausf_ue_cycle");
     return ausf_ue_ret;

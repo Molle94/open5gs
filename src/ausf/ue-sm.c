@@ -106,7 +106,7 @@ void ausf_ue_state_operational(ogs_fsm_t *s, ausf_event_t *e)
                     OGS_SBI_HTTP_STATUS_FORBIDDEN, message,
                     "Invalid HTTP method", message->h.method));
         END
-
+        update_ausf_ue(ausf_ue);
         break;
 
     case AUSF_EVT_SBI_CLIENT:
@@ -157,6 +157,8 @@ void ausf_ue_state_operational(ogs_fsm_t *s, ausf_event_t *e)
             ogs_error("Invalid API name [%s]", message->h.service.name);
             ogs_assert_if_reached();
         END
+
+        update_ausf_ue(ausf_ue);
         break;
 
 

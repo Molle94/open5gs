@@ -27,6 +27,9 @@
 #include "ausf-sm.h"
 #include "timer.h"
 
+#include "statemanagement.h"
+#include "defs.pb-c.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,9 +44,9 @@ extern int __ausf_log_domain;
 typedef struct ausf_context_s {
     OpenAPI_nf_type_e   nf_type;
 
-    ogs_list_t      ausf_ue_list;
-    ogs_hash_t      *suci_hash;
-    ogs_hash_t      *supi_hash;
+//    ogs_list_t      ausf_ue_list;
+//    ogs_hash_t      *suci_hash;
+//    ogs_hash_t      *supi_hash;
 
 } ausf_context_t;
 
@@ -90,8 +93,13 @@ ausf_context_t *ausf_self(void);
 int ausf_context_parse_config(void);
 
 ausf_ue_t *ausf_ue_add(char *suci);
+void update_ausf_ue(ausf_ue_t *ausf_ue);
+void encode_and_save_ue_data(StoreKeyValue *store_kv, ausf_ue_t* ausf_ue);
+void decode_ue_data(uint8_t *store_data, size_t data_size, ausf_ue_t* ausf_ue);
 void ausf_ue_remove(ausf_ue_t *ausf_ue);
 void ausf_ue_remove_all(void);
+ausf_ue_t *create_ausf_ue_from_data_store(uint8_t *store_data, size_t data_size);
+void get_from_data_store(char *key, ausf_ue_t **ausf_ue_p);
 ausf_ue_t *ausf_ue_find_by_suci(char *suci);
 ausf_ue_t *ausf_ue_find_by_supi(char *supi);
 ausf_ue_t *ausf_ue_find_by_suci_or_supi(char *suci_or_supi);
