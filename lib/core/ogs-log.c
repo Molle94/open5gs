@@ -548,9 +548,9 @@ static char *log_timestamp(char *buf, char *last,
     ogs_localtime(tv.tv_sec, &tm);
     strftime(nowstr, sizeof nowstr, "%m/%d %H:%M:%S", &tm);
 
-    buf = ogs_slprintf(buf, last, "%s%s.%03d%s: ",
+    buf = ogs_slprintf(buf, last, "%s%s.%06d%s: ",
             use_color ? TA_FGC_GREEN : "",
-            nowstr, (int)(tv.tv_usec/1000),
+            nowstr, (int)(tv.tv_usec),
             use_color ? TA_NOR : "");
 
     return buf;
