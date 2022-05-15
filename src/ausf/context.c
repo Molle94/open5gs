@@ -247,13 +247,13 @@ void encode_and_save_ue_data(StoreKeyValue *store_kv, ausf_ue_t* ausf_ue) {
 
   if (OGS_FSM_CHECK(&ausf_ue->sm, &ausf_ue_state_operational)) {
     ogs_info("&ausf_state_operational");
-    request.fsm_state = "ausf_ue_state_operational";
+    request.fsm_state = (char *)"ausf_ue_state_operational";
   } else if (OGS_FSM_CHECK(&ausf_ue->sm, &ausf_ue_state_final)) {
     ogs_info("&ausf_state_final");
-    request.fsm_state = "ausf_ue_state_final";
+    request.fsm_state = (char *)"ausf_ue_state_final";
   } else if (OGS_FSM_CHECK(&ausf_ue->sm, &ausf_ue_state_initial)) {
     ogs_info("&ausf_state_initial");
-    request.fsm_state = "ausf_ue_state_initial";
+    request.fsm_state = (char *)"ausf_ue_state_initial";
   } else {
     ogs_warn("Can't encode fsm state");
   }
@@ -291,7 +291,7 @@ void decode_ue_data(uint8_t *store_data, size_t data_size, ausf_ue_t* ausf_ue) {
   ogs_fsm_create(&ausf_ue->sm, ausf_ue_state_initial, ausf_ue_state_final);
   ogs_info("fsm state: %s", response->fsm_state);
   if(strcmp(response->fsm_state, "ausf_ue_state_operational") == 0) {
-    ogs_info("ausf_state_operational");
+    ogs_info("ausf_ue_state_operational");
     OGS_FSM_TRAN(&ausf_ue->sm, &ausf_ue_state_operational);
   } else if(strcmp(response->fsm_state, "ausf_ue_state_final") == 0) {
     ogs_info("ausf_ue_state_final");
@@ -376,7 +376,6 @@ void ausf_ue_remove_all()
 
 ausf_ue_t *create_ausf_ue_from_data_store(uint8_t *store_data, size_t data_size) {
   instr_start_timing();
-  ausf_event_t e;
   ausf_ue_t *ausf_ue = NULL;
 
   ogs_pool_alloc(&ausf_ue_pool, &ausf_ue);
