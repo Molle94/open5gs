@@ -34,6 +34,9 @@
 extern "C" {
 #endif
 
+#define TIME_MEASUREMENTS 1
+#define TIME_MEASUREMENTS_ITERATIONS 100
+
 #define MAX_NUM_OF_SERVED_GUAMI     8
 
 extern int __ausf_log_domain;
@@ -108,6 +111,14 @@ ausf_ue_t *ausf_ue_find_by_ctx_id(char *ctx_id);
 ausf_ue_t *ausf_ue_cycle(ausf_ue_t *ausf_ue);
 
 void ausf_ue_select_nf(ausf_ue_t *ausf_ue, OpenAPI_nf_type_e nf_type);
+
+#ifdef TIME_MEASUREMENTS
+void time_measurments_main(void);
+void time_measurments_add_to_store(void);
+void time_measurments_get_value_store(void);
+void time_measurments_update_in_store(void);
+void time_measurement_json_parse(void);
+#endif
 
 #ifdef __cplusplus
 }

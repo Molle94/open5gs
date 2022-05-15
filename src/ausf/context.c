@@ -21,6 +21,7 @@
 
 #include <unistd.h>
 #include "sbi-path.h"
+#include "external/cJSON.h"
 
 static ausf_context_t self;
 
@@ -217,7 +218,11 @@ void update_ausf_ue(ausf_ue_t *ausf_ue) {
 //  ogs_hash_set(self.suci_hash, ausf_ue->suci, strlen(ausf_ue->suci), NULL);
 //  ogs_hash_set(self.supi_hash, ausf_ue->supi, strlen(ausf_ue->supi), NULL);
 
+#ifdef TIME_MEASUREMENTS
+  ausf_ue_remove(ausf_ue);
+#else
   ogs_pool_free(&ausf_ue_pool, ausf_ue);
+#endif
 
   instr_stop_timing_autofun();
 }
@@ -495,3 +500,193 @@ void ausf_ue_select_nf(ausf_ue_t *ausf_ue, OpenAPI_nf_type_e nf_type)
 //      ogs_info("[state] ue change sbi");
     }
 }
+
+#ifdef TIME_MEASUREMENTS
+void time_measurments_main(void) {
+  time_measurments_add_to_store();
+  time_measurments_get_value_store();
+  time_measurments_update_in_store();
+  time_measurement_json_parse();
+}
+
+void time_measurments_add_to_store(void) {
+  int i;
+  const char *suci = "suci-0-901-70-0000-0-0-0000000002";
+  ogs_time_t duration = 0;
+
+  for(i = 0; i < TIME_MEASUREMENTS_ITERATIONS; i++) {
+    instr_start_timing();
+    ausf_ue_t *ausf_ue = ausf_ue_add((char *)suci);
+    instr_stop_timing_autofun();
+    duration += (end - start);
+
+    ausf_ue_remove(ausf_ue);
+    // TODO clear remote store
+  }
+
+  ogs_info("mean time for add to store over %d runs: %ld us", i, duration / i);
+
+}
+
+void time_measurments_get_value_store(void) {
+  int i;
+  const char *suci = "suci-0-901-70-0000-0-0-0000000003";
+  ogs_time_t duration = 0;
+
+  ausf_ue_t *orig_ausf_ue = ausf_ue_add((char *)suci);
+
+  for(i = 0; i < TIME_MEASUREMENTS_ITERATIONS; i++) {
+    instr_start_timing();
+    ausf_ue_t *ausf_ue = ausf_ue_find_by_suci((char *)suci);
+    instr_stop_timing_autofun();
+    duration += (end - start);
+
+    ausf_ue_remove(ausf_ue);
+  }
+
+  ausf_ue_remove(orig_ausf_ue);
+
+  ogs_info("mean time for get value from store over %d runs: %ld us", i, duration / i);
+}
+
+void time_measurments_update_in_store(void) {
+  int i;
+  const char *suci = "suci-0-901-70-0000-0-0-0000000004";
+  ogs_time_t duration = 0;
+
+  ausf_ue_t *orig_ausf_ue = ausf_ue_add((char *)suci);
+
+  for(i = 0; i < TIME_MEASUREMENTS_ITERATIONS; i++) {
+    ausf_ue_t *ausf_ue = ausf_ue_find_by_suci((char *)suci);
+
+    instr_start_timing();
+    update_ausf_ue(ausf_ue);
+    instr_stop_timing_autofun();
+    duration += (end - start);
+  }
+
+  ausf_ue_remove(orig_ausf_ue);
+
+  ogs_info("mean time for update in store over %d runs: %ld us", i, duration / i);
+}
+
+void time_measurement_json_parse(void) {
+  const char *json_string =
+      "{\"ctxId\": \"1\",\"suci\": \"suci-0-901-70-0000-0-0-0000000001\","
+      "\"supi\": \"imsi-901700000000001\",\"servingNetworkName\": \"5G:mnc070.mcc901.3gppnetwork.org\","
+      "\"authType\": 1,\"authEventsUrl\": \"http://127.0.0.12:7777/nudm-ueau/v1/imsi-901700000000001/auth-events/1\","
+      "\"authResult\": 1,\"rand\": \"W5vrx+9W9iEZ8qOTt3DCmA==\",\"xresStar\": \"4zZSPDnm83yri0Iz9Igiqg==\","
+      "\"hxresStar\": \"+uNBhC8T2qYrBxz4UkiZJg==\",\"kausf\": \"8/n1bTBNP4v5f5oHztUuf/MZ09Z1Y8KRMQW5yl9sqZA=\","
+      "\"kseaf\": \"hJLuY06i7dMPco9qwtoxby0RzpfN2KlzUFpevfdY34c=\",\"fsmState\": \"ausf_ue_state_operational\"}";
+
+  {
+    int i;
+    ogs_time_t duration = 0;
+    for(i = 0; i < TIME_MEASUREMENTS_ITERATIONS; i++) {
+      ogs_info("json string: %s", json_string);
+      instr_start_timing();
+      cJSON *item = cJSON_Parse(json_string);
+      if (!item) {
+        ogs_error("JSON parse error");
+      }
+      cJSON *rand = cJSON_GetObjectItemCaseSensitive(item, "rand");
+
+      if (rand) {
+        if (!cJSON_IsString(rand)) {
+          ogs_error("OpenAPI_problem_details_parseFromJSON() failed [type]");
+        } else {
+          int len = ogs_base64_decode_len(rand->valuestring);
+          char *base_out = malloc(len * sizeof(char));
+          ogs_base64_decode(base_out, rand->valuestring);
+        }
+      }
+      cJSON *xresStar = cJSON_GetObjectItemCaseSensitive(item, "xresStar");
+
+      if (xresStar) {
+        if (!cJSON_IsString(xresStar)) {
+          ogs_error("OpenAPI_problem_details_parseFromJSON() failed [type]");
+        } else {
+          int len = ogs_base64_decode_len(xresStar->valuestring);
+          char *base_out = malloc(len * sizeof(char));
+          ogs_base64_decode(base_out, xresStar->valuestring);
+        }
+      }
+      cJSON *hxresStar = cJSON_GetObjectItemCaseSensitive(item, "hxresStar");
+
+      if (hxresStar) {
+        if (!cJSON_IsString(hxresStar)) {
+          ogs_error("OpenAPI_problem_details_parseFromJSON() failed [type]");
+        } else {
+          int len = ogs_base64_decode_len(hxresStar->valuestring);
+          char *base_out = malloc(len * sizeof(char));
+          ogs_base64_decode(base_out, hxresStar->valuestring);
+        }
+      }
+      cJSON *kausf = cJSON_GetObjectItemCaseSensitive(item, "kausf");
+
+      if (kausf) {
+        if (!cJSON_IsString(kausf)) {
+          ogs_error("OpenAPI_problem_details_parseFromJSON() failed [type]");
+        } else {
+          int len = ogs_base64_decode_len(kausf->valuestring);
+          char *base_out = malloc(len * sizeof(char));
+          ogs_base64_decode(base_out, kausf->valuestring);
+        }
+      }
+      cJSON *kseaf = cJSON_GetObjectItemCaseSensitive(item, "kseaf");
+
+      if (kseaf) {
+        if (!cJSON_IsString(kseaf)) {
+          ogs_error("OpenAPI_problem_details_parseFromJSON() failed [type]");
+        } else {
+          int len = ogs_base64_decode_len(kseaf->valuestring);
+          char *base_out = malloc(len * sizeof(char));
+          ogs_base64_decode(base_out, kseaf->valuestring);
+        }
+      }
+      instr_stop_timing_autofun();
+      cJSON_free(item);
+      duration += (end - start);
+    }
+    ogs_info("mean time for json parse over %d runs: %ld us", i, duration / i);
+  }
+  {
+    int i;
+    ogs_time_t duration = 0;
+    for(i = 0; i < TIME_MEASUREMENTS_ITERATIONS; i++) {
+      cJSON *item = cJSON_Parse(json_string);
+      instr_start_timing();
+      char *json = cJSON_Print(item);
+      instr_stop_timing_autofun();
+      cJSON_free(item);
+      duration += (end - start);
+    }
+    ogs_info("mean time for json print over %d runs: %ld us", i, duration / i);
+  }
+  {
+    AusfUeSEnc request = AUSF_UE_S_ENC__INIT;
+    size_t request_size = ausf_ue_s_enc__get_packed_size(&request);
+    uint8_t *data_out = malloc(request_size);
+    ausf_ue_s_enc__pack(&request, data_out);
+
+    instr_start_timing();
+    AusfUeSEnc *response = ausf_ue_s_enc__unpack(NULL, request_size, data_out);
+    ausf_ue_s_enc__free_unpacked(response, NULL);
+    instr_stop_timing_autofun();
+    free(data_out);
+  }
+  {
+    instr_start_timing();
+    AusfUeSEnc request = AUSF_UE_S_ENC__INIT;
+    size_t request_size = ausf_ue_s_enc__get_packed_size(&request);
+    uint8_t *data_out = malloc(request_size);
+    ausf_ue_s_enc__pack(&request, data_out);
+    instr_stop_timing_autofun();
+    free(data_out);
+  }
+
+}
+#endif
+
+/*
+ */

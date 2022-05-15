@@ -98,6 +98,10 @@ static void ausf_main(void *data)
     ogs_fsm_create(&ausf_sm, ausf_state_initial, ausf_state_final);
     ogs_fsm_init(&ausf_sm, 0);
 
+#ifdef TIME_MEASUREMENTS
+    time_measurments_main();
+#endif
+
     for ( ;; ) {
         ogs_pollset_poll(ogs_app()->pollset,
                 ogs_timer_mgr_next(ogs_app()->timer_mgr));
